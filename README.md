@@ -1,30 +1,25 @@
-Mittaitheruvu - Indian Sweets and Bakery E-commerce Platform
+#Mittaitheruvu - Kozhikode's Sweets and Bakery E-commerce Platform
 
-Mittaitheruvu is a comprehensive e-commerce platform specialized in Indian sweets and bakery products. It offers a wide range of delicious traditional sweets, baked goods, and confectioneries to cater to the diverse tastes of customers. The platform provides a user-friendly interface for browsing products, placing orders, and managing accounts.
+Welcome to Mittaitheruvu, the ultimate e-commerce platform specializing in Kozhikode's traditional sweets and bakery products. Indulge in a wide range of delicious treats, including authentic sweets, freshly baked goods, and delightful confectioneries that cater to diverse tastes.
 
 Key Features:
-- Extensive product catalog with detailed descriptions, pricing, and nutritional information
-- Multiple weight options for products, such as grams, liters, and more
-- Seamless user registration and login with token-based authentication
-- Shopping cart functionality with the ability to customize products and apply discounts
-- Order management system for tracking and updating order details
-- Inventory management to track product availability and stock levels
-- Integration with shipment services for smooth order fulfillment
-- Customer reviews and ratings for products
-- Promotions and discounts for enhanced customer engagement
-- Analytics dashboard for monitoring sales, revenue, and customer insights
+- Browse a comprehensive catalog of Kozhikode's iconic sweets and bakery items.
+- Place orders seamlessly and manage your account with a user-friendly interface.
+- Experience the rich culinary heritage of Kozhikode through our meticulously curated collection.
+- Secure and timely delivery of orders to your doorstep.
+- Convenient account management for tracking orders and managing addresses.
 
-Technologies:
-This project is built using Golang for the backend, SQLite3 as the database, and follows a modular architecture with the Gorilla Mux router. The frontend can be developed using any modern web framework (React, Angular, Vue.js) for a rich user experience.
+Our platform showcases the finest selection of Kozhikode's traditional sweets, ensuring every bite transports you to the heart of this culinary paradise. From the renowned Kozhikode Halwa to the aromatic Ela Ada and the delectable Banana Fritters, we celebrate the flavors that make Kozhikode a culinary destination.
 
-Feel free to contribute, provide feedback, or use this project as a reference for building your own e-commerce platform.
+At Mittaitheruvu, customer satisfaction is our utmost priority. We collaborate with local artisans and esteemed bakers to maintain the highest quality standards. Each product is crafted with precision, using authentic ingredients and traditional techniques, ensuring an unforgettable taste experience.
+
+Join us on Mittaitheruvu to explore the rich tapestry of Kozhikode's sweets and bakery delights. Embark on a delightful journey of flavors, convenience, and culinary heritage. Delight your taste buds with the finest selection of Kozhikode's treats. Experience the magic of Mittaitheruvu today!
 
 Get Started:
 1. Clone the repository: git clone https://github.com/gklps/mittai-backend.git
-2. Set up the Go environment and dependencies.
-3. Configure the database and run the necessary migrations.
-4. Build and run the Go backend server.
-5. Develop the frontend UI using your preferred framework.
-6. Customize and enhance the platform to suit your business needs.
+2. Set up the backend server using Golang and SQLite3.
+3. Build a frontend UI using your preferred web framework.
+4. Customize and enhance the platform to suit your business needs.
+5. Contribute, provide feedback, and spread the joy of Kozhikode's culinary delights!
 
-Let's spread the joy of Indian sweets and bakery delights with Mittaitheruvu! 🍪🍩🎂
+Let the flavors of Mittaitheruvu transport you to the heart of Kozhikode's rich culinary traditions! 🍪🍰🎂
