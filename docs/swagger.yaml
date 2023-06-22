@@ -1,0 +1,441 @@
+basePath: /
+definitions:
+  handlers.AddUserAddressRequest:
+    properties:
+      address:
+        $ref: '#/definitions/models.Address'
+      userID:
+        type: integer
+    type: object
+  handlers.CreateUserResponse:
+    properties:
+      userID:
+        type: integer
+    type: object
+  handlers.EmptyResponse:
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handlers.UpdateUserAddressRequest:
+    properties:
+      address:
+        $ref: '#/definitions/models.Address'
+      userID:
+        type: integer
+    type: object
+  handlers.UpdateUserPhoneRequest:
+    properties:
+      phoneNumber:
+        type: string
+      userID:
+        type: integer
+    type: object
+  models.Address:
+    properties:
+      address:
+        type: string
+      addressID:
+        type: integer
+      city:
+        type: string
+      state:
+        type: string
+      userID:
+        type: integer
+      zipCode:
+        type: string
+    type: object
+  models.Order:
+    properties:
+      delivery_address:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/models.OrderItem'
+        type: array
+      order_date:
+        type: string
+      order_id:
+        type: integer
+      payment_method:
+        type: string
+      status:
+        type: string
+      total_amount:
+        type: number
+      user_id:
+        type: integer
+    type: object
+  models.OrderItem:
+    properties:
+      customization_options:
+        type: string
+      order_id:
+        type: integer
+      order_item_id:
+        type: integer
+      price:
+        type: number
+      product_weight_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  models.Product:
+    properties:
+      availability:
+        type: integer
+      category:
+        type: string
+      description:
+        type: string
+      image_url:
+        type: string
+      ingredients:
+        type: string
+      name:
+        type: string
+      nutritional_information:
+        type: string
+      price:
+        type: number
+      product_id:
+        type: integer
+      product_weights:
+        items:
+          $ref: '#/definitions/models.ProductWeight'
+        type: array
+    type: object
+  models.ProductWeight:
+    properties:
+      product_id:
+        type: integer
+      product_weight_id:
+        type: integer
+      weight:
+        type: string
+    type: object
+  models.User:
+    properties:
+      address:
+        type: string
+      contactNumber:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      userID:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API documentation for Mittai Backend
+  title: Mittai Backend API
+  version: "1.0"
+paths:
+  /admin/flush:
+    delete:
+      description: Deletes all records from all tables
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.EmptyResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Flush all tables
+      tags:
+      - administration
+  /orders:
+    get:
+      description: Retrieves a list of all orders
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Order'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Retrieve all orders
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Creates a new order
+      parameters:
+      - description: Order object
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/models.Order'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new order
+      tags:
+      - orders
+  /products:
+    get:
+      description: Retrieves a list of all products
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Product'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Retrieve all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product in the database
+      parameters:
+      - description: Product object
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/models.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new product
+      tags:
+      - products
+  /products/{product_id}:
+    get:
+      description: Retrieves a product by its ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Retrieve a product by ID
+      tags:
+      - products
+  /users:
+    get:
+      description: Retrieves all users from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Retrieve all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user in the database
+      parameters:
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.CreateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - users
+  /users/{userID}/addresses:
+    get:
+      description: Retrieves all addresses for a user
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Address'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get user addresses
+      tags:
+      - users
+  /users/address:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new address for a user
+      parameters:
+      - description: Add user address request object
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AddUserAddressRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.EmptyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Add user address
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing address for a user
+      parameters:
+      - description: Update user address request object
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateUserAddressRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.EmptyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update user address
+      tags:
+      - users
+  /users/phone:
+    put:
+      consumes:
+      - application/json
+      description: Updates the phone number for a user
+      parameters:
+      - description: Update user phone request object
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateUserPhoneRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.EmptyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update user phone number
+      tags:
+      - users
+schemes:
+- http
+swagger: "2.0"
