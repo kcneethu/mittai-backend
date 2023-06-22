@@ -1,4 +1,5 @@
-#Mittaitheruvu - Kozhikode's Sweets and Bakery E-commerce Platform
+# Mittaitheruvu 
+Kozhikode's Sweets and Bakery E-commerce Platform
 
 Welcome to Mittaitheruvu, the ultimate e-commerce platform specializing in Kozhikode's traditional sweets and bakery products. Indulge in a wide range of delicious treats, including authentic sweets, freshly baked goods, and delightful confectioneries that cater to diverse tastes.
 
