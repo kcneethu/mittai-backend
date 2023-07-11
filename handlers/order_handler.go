@@ -83,10 +83,8 @@ func CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateOrderData(order models.Order) error {
-
 	if len(order.Items) == 0 {
 		return fmt.Errorf("order must have at least one item")
 	}
-
 	return nil
 }

@@ -143,7 +143,7 @@ func UpdateUserAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.UpdateUserAddress(request.UserID, request.Address)
+	err = db.UpdateUserAddress(request.UserID, request.Address.Address)
 	if err != nil {
 		log.Printf("failed to update user address: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -172,7 +172,7 @@ func AddUserAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.AddUserAddress(request.UserID, request.Address)
+	err = db.AddUserAddress(request.UserID, request.Address.Address)
 	if err != nil {
 		log.Printf("failed to add user address: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -254,14 +254,15 @@ type UpdateUserPhoneRequest struct {
 }
 
 // UpdateUserAddressRequest represents the request to update user address
+// UpdateUserAddressRequest represents the request to update user address
 type UpdateUserAddressRequest struct {
-	UserID  int            `json:"userID"`
+	UserID  int           `json:"userID"`
 	Address models.Address `json:"address"`
 }
 
 // AddUserAddressRequest represents the request to add user address
 type AddUserAddressRequest struct {
-	UserID  int            `json:"userID"`
+	UserID  int           `json:"userID"`
 	Address models.Address `json:"address"`
 }
 

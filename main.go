@@ -19,8 +19,7 @@ import (
 // @schemes http
 func main() {
 	// Initialize the database
-	err := db.InitDB()
-	if err != nil {
+	if err := db.InitDB(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
