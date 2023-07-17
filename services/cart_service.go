@@ -32,6 +32,7 @@ func (cs *CartService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/cart/{userID}", cs.GetCartByUserID).Methods("GET")
 	r.HandleFunc("/cart/{userID}/{productWeightID}", cs.UpdateCartItem).Methods("PUT")
 	r.HandleFunc("/cart/{userID}/{productWeightID}", cs.RemoveCartItem).Methods("DELETE")
+	r.HandleFunc("/cart/{userID}/clear", cs.ClearCart).Methods("POST")
 }
 
 // AddToCart adds an item to the user's cart
@@ -98,7 +99,6 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a new cart item with the fetched product weight details
 	newCartItem := &models.CartItem{
 		Product:   productWeight,
 		Quantity:  cartItem.Quantity,
@@ -106,8 +106,17 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: time.Now(),
 	}
 
-	// Add the new cart item to the cart
 	cart.Items = append(cart.Items, newCartItem)
+
+	cart.TotalPrice = cart.GetTotalPrice()
+
+	// Update the cart in the database
+	err = cs.updateCart(cart)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to update cart", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Item added to cart successfully"))
@@ -144,7 +153,10 @@ func (cs *CartService) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(cart)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"cart":       cart,
+		"totalPrice": cart.TotalPrice,
+	})
 }
 
 // UpdateCartItem updates the quantity of a cart item in the user's cart
@@ -186,6 +198,7 @@ func (cs *CartService) UpdateCartItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Cart not found", http.StatusNotFound)
 		return
 	}
+	cart.TotalPrice = cart.GetTotalPrice()
 
 	productWeightID, err := strconv.Atoi(productWeightIDStr)
 	if err != nil {
@@ -209,6 +222,22 @@ func (cs *CartService) UpdateCartItem(w http.ResponseWriter, r *http.Request) {
 			item.Product = productWeight
 			item.Quantity = cartItem.Quantity
 
+			// Update the cart item quantity in the database
+			err = cs.updateCartItemQuantity(userID, productWeightID, cartItem.Quantity)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Failed to update cart item quantity", http.StatusInternalServerError)
+				return
+			}
+
+			// Update the cart in the database
+			err = cs.updateCart(cart)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Failed to update cart", http.StatusInternalServerError)
+				return
+			}
+
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("Cart item updated successfully"))
 			return
@@ -221,10 +250,13 @@ func (cs *CartService) UpdateCartItem(w http.ResponseWriter, r *http.Request) {
 // RemoveCartItem removes a cart item from the user's cart
 // @Summary Remove a cart item from the cart
 // @Tags Cart
+// @Accept json
+// @Produce json
 // @Param userID path string true "User ID"
 // @Param productWeightID path string true "Product Weight ID"
 // @Success 200 {string} string "Cart item removed successfully"
-// @Failure 404 {object} ErrorResponse "Cart item not found"
+// @Failure 400 {object} ErrorResponse "Invalid user ID or product weight ID"
+// @Failure 404 {object} ErrorResponse "Cart not found or Cart item not found"
 // @Router /cart/{userID}/{productWeightID} [delete]
 func (cs *CartService) RemoveCartItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -265,9 +297,18 @@ func (cs *CartService) RemoveCartItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Cart item not found", http.StatusNotFound)
 		return
 	}
+	cart.TotalPrice = cart.GetTotalPrice()
 
 	// Remove the cart item from the cart
 	cart.Items = append(cart.Items[:index], cart.Items[index+1:]...)
+
+	// Update the cart in the database
+	err = cs.updateCart(cart)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to update cart", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Cart item removed successfully"))
@@ -316,4 +357,89 @@ func (cs *CartService) getProductWeightByID(productWeightID int) (*models.Produc
 	}
 
 	return productWeight, nil
+}
+
+// updateCart updates the cart in the database
+func (cs *CartService) updateCart(cart *models.Cart) error {
+	// Convert the cart items to JSON
+	itemsJSON, err := json.Marshal(cart.Items)
+	if err != nil {
+		return err
+	}
+
+	// Prepare the SQL statement
+	stmt, err := cs.Repository.DB.Prepare("UPDATE carts SET items = ? WHERE user_id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	// Execute the SQL statement
+	_, err = stmt.Exec(itemsJSON, cart.UserID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// updateCartItemQuantity updates the quantity of a cart item in the database
+func (cs *CartService) updateCartItemQuantity(userID, productWeightID, quantity int) error {
+	// Prepare the SQL statement
+	stmt, err := cs.Repository.DB.Prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_weight_id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	// Execute the SQL statement
+	_, err = stmt.Exec(quantity, userID, productWeightID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// @Summary Clear the cart for a specific user
+// @Description This endpoint will clear all items from a user's cart.
+// @Tags Cart
+// @Accept json
+// @Produce json
+// @Param userID path int true "User ID"
+// @Success 200 {string} string "Cart cleared successfully"
+// @Failure 400 {object} ErrorResponse "Invalid user ID"
+// @Failure 404 {object} ErrorResponse "Cart not found"
+// @Failure 500 {object} ErrorResponse "Failed to clear cart"
+// @Router /cart/{userID}/clear [post]
+func (cs *CartService) ClearCart(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userIDstr := vars["userID"]
+
+	userID, err := strconv.Atoi(userIDstr)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	cart, exists := cs.CartDB[userID]
+	if !exists {
+		http.Error(w, "Cart not found", http.StatusNotFound)
+		return
+	}
+
+	cart.Items = make([]*models.CartItem, 0)
+
+	cart.TotalPrice = 0
+
+	err = cs.updateCart(cart)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to clear cart", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Cart cleared successfully"))
 }

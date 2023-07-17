@@ -26,6 +26,9 @@ definitions:
         items:
           $ref: '#/definitions/models.CartItem'
         type: array
+      total_price:
+        description: add this line
+        type: number
       updated_at:
         type: string
       user_id:
@@ -211,6 +214,8 @@ paths:
       - Cart
   /cart/{userID}/{productWeightID}:
     delete:
+      consumes:
+      - application/json
       parameters:
       - description: User ID
         in: path
@@ -222,13 +227,19 @@ paths:
         name: productWeightID
         required: true
         type: string
+      produces:
+      - application/json
       responses:
         "200":
           description: Cart item removed successfully
           schema:
             type: string
+        "400":
+          description: Invalid user ID or product weight ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
         "404":
-          description: Cart item not found
+          description: Cart not found or Cart item not found
           schema:
             $ref: '#/definitions/services.ErrorResponse'
       summary: Remove a cart item from the cart
@@ -270,6 +281,39 @@ paths:
           schema:
             $ref: '#/definitions/services.ErrorResponse'
       summary: Update the quantity of a cart item
+      tags:
+      - Cart
+  /cart/{userID}/clear:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint will clear all items from a user's cart.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cart cleared successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "404":
+          description: Cart not found
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to clear cart
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Clear the cart for a specific user
       tags:
       - Cart
   /products:

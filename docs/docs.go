@@ -91,6 +91,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/cart/{userID}/clear": {
+            "post": {
+                "description": "This endpoint will clear all items from a user's cart.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Clear the cart for a specific user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart cleared successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart not found",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to clear cart",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cart/{userID}/{productWeightID}": {
             "put": {
                 "consumes": [
@@ -150,6 +200,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "Cart"
                 ],
@@ -177,8 +233,14 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "400": {
+                        "description": "Invalid user ID or product weight ID",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "Cart item not found",
+                        "description": "Cart not found or Cart item not found",
                         "schema": {
                             "$ref": "#/definitions/services.ErrorResponse"
                         }
@@ -681,6 +743,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.CartItem"
                     }
+                },
+                "total_price": {
+                    "description": "add this line",
+                    "type": "number"
                 },
                 "updated_at": {
                     "type": "string"

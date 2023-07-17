@@ -48,6 +48,16 @@ type AddProductRequest struct {
 	ImageURLs       []string `json:"image_urls" form:"image_urls"`
 }
 
+// RegisterRoutes registers the product management routes
+func (ps *ProductService) RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/products", ps.ListProducts).Methods("GET")
+	r.HandleFunc("/products/{id}", ps.GetProductDetails).Methods("GET")
+	r.HandleFunc("/products", ps.AddProduct).Methods("POST")
+	r.HandleFunc("/products/{id}", ps.UpdateProduct).Methods("PUT")
+	r.HandleFunc("/products/{id}", ps.DeleteProduct).Methods("DELETE")
+	r.HandleFunc("/products/{productID}/weights/{weightID}", ps.UpdateProductWeightByID).Methods("PUT")
+}
+
 // AddProduct adds a new product to the inventory
 // @Summary Add a new product to the inventory
 // @Tags Products
@@ -370,6 +380,17 @@ func (ps *ProductService) ListProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get the weights for each product
+	for _, product := range products {
+		weights, err := ps.getProductWeights(product.ID)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to retrieve product weights", http.StatusInternalServerError)
+			return
+		}
+		product.Weights = weights
+	}
+
 	// Send the response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(products)
@@ -571,14 +592,4 @@ func (ps *ProductService) getProductWeightByID(productID string, weightID string
 	}
 
 	return weight, nil
-}
-
-// RegisterRoutes registers the product management routes
-func (ps *ProductService) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/products", ps.ListProducts).Methods("GET")
-	r.HandleFunc("/products/{id}", ps.GetProductDetails).Methods("GET")
-	r.HandleFunc("/products", ps.AddProduct).Methods("POST")
-	r.HandleFunc("/products/{id}", ps.UpdateProduct).Methods("PUT")
-	r.HandleFunc("/products/{id}", ps.DeleteProduct).Methods("DELETE")
-	r.HandleFunc("/products/{productID}/weights/{weightID}", ps.UpdateProductWeightByID).Methods("PUT")
 }

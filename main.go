@@ -73,16 +73,19 @@ func main() {
 	// Register more services' routes as needed
 
 	// Set up Swagger
-	swaggerURL := "/swagger/doc.json"
+	swaggerURL := "/docs/swagger.json"
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-		httpSwagger.URL(swaggerURL), // The URL pointing to the API definition
+		httpSwagger.URL(swaggerURL), // The url pointing to API definition
 	))
 
+	router.PathPrefix("/docs/").Handler(http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
+
 	// Log URLs
-	log.Println("Swagger UI (API Documentation): http://localhost:8080/swagger/index.html")
-	log.Println("Swagger JSON Specification: http://localhost:8080/swagger/doc.json")
+	log.Println("Swagger UI (API Documentation): http://localhost:8080/swagger/")
+	log.Println("Swagger JSON Specification: http://localhost:8080/docs" + swaggerURL)
 	log.Println("Database Path:", dbPath)
 
 	// Start the HTTP server
 	log.Fatal(http.ListenAndServe(":8080", router))
+
 }
