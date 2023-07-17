@@ -1,10 +1,20 @@
 package models
 
-// Cart represents a user's cart in the system
+import "time"
+
+// Cart represents a user's cart
 type Cart struct {
-	CartID           int    `json:"cart_id"`
-	UserID           int    `json:"user_id"`
-	ProductWeightID  int    `json:"product_weight_id"`
-	Quantity         int    `json:"quantity"`
-	AppliedDiscounts string `json:"applied_discounts"`
+	ID        int         `json:"id"`
+	UserID    int         `json:"user_id"`
+	Items     []*CartItem `json:"items"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+}
+
+// CartItem represents an item in the user's cart
+type CartItem struct {
+	Product   *ProductWeight `json:"product"`
+	Quantity  int            `json:"quantity"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }

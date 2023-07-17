@@ -1,55 +1,88 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gklps/mittai-backend/db"
-	"github.com/gklps/mittai-backend/handlers"
-	"github.com/go-chi/chi"
+	"github.com/gklps/mittai-backend/services"
+	"github.com/gorilla/mux"
+	_ "github.com/mattn/go-sqlite3"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// @title Mittai Backend API
-// @description API documentation for Mittai Backend
-// @version 1.0
-// @host localhost:8080
-// @BasePath /
-// @schemes http
 func main() {
-	// Initialize the database
-	if err := db.InitDB(); err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+	// Get the current directory path
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Failed to get the current directory:", err)
 	}
 
-	// Create a new router
-	r := chi.NewRouter()
+	// Set the path of the database file
+	dbPath := filepath.Join(dir, "database.db")
 
-	// Define routes
-	r.Get("/users", handlers.UsersHandler)
-	r.Post("/users", handlers.UsersHandler)
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		// Create a new database file
+		log.Println("Database file does not exist. Creating a new database.")
 
-	r.Get("/products", handlers.ProductsHandler)
-	r.Post("/products", handlers.ProductsHandler)
+		// Create the database file
+		file, err := os.Create(dbPath)
+		if err != nil {
+			log.Fatal("Failed to create the database file:", err)
+		}
+		file.Close()
 
-	r.Get("/orders", handlers.OrdersHandler)
-	r.Post("/orders", handlers.OrdersHandler)
+		// Run the database initialization code here
+		// ...
 
-	// Serve swagger.json file
-	r.Handle("/docs/*", http.StripPrefix("/docs", http.FileServer(http.Dir("./docs"))))
+	} else {
+		log.Println("Database file found. Connecting to the existing database.")
+	}
 
-	// Swagger API documentation
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/docs/swagger.json"), // The URL pointing to the API definition
+	// Open a connection to the SQLite database
+	dbConn, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatal("Failed to connect to the database:", err)
+	}
+	defer dbConn.Close()
+
+	// Create a new instance of the repository
+	repo := db.NewRepository(dbConn)
+
+	// Create necessary tables in the database
+	repo.CreateTables()
+
+	// Create instances of the services
+	productService := services.NewProductService(repo)
+	productWeightService := services.NewProductWeightService(repo)
+	userService := services.NewUserService(repo)
+	cartService := services.NewCartService(repo) // Pass repo.DB here
+	// Create more instances of services as needed
+
+	// Create a new Gorilla Mux router
+	router := mux.NewRouter()
+
+	// Register the routes for each service
+	productService.RegisterRoutes(router)
+	userService.RegisterRoutes(router)
+	productWeightService.RegisterRoutes(router)
+	cartService.RegisterRoutes(router)
+	// Register more services' routes as needed
+
+	// Set up Swagger
+	swaggerURL := "/swagger/doc.json"
+	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL(swaggerURL), // The URL pointing to the API definition
 	))
 
-	// Start the server
-	port := 8080
-	fmt.Printf("Server listening on port %d...\n", port)
+	// Log URLs
+	log.Println("Swagger UI (API Documentation): http://localhost:8080/swagger/index.html")
+	log.Println("Swagger JSON Specification: http://localhost:8080/swagger/doc.json")
+	log.Println("Database Path:", dbPath)
 
-	swaggerURL := fmt.Sprintf("http://localhost:%d/swagger/index.html", port)
-	fmt.Printf("Swagger API documentation available at: %s\n", swaggerURL)
-
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
+	// Start the HTTP server
+	log.Fatal(http.ListenAndServe(":8080", router))
 }

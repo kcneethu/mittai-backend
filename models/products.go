@@ -1,15 +1,29 @@
 package models
 
+import (
+	"time"
+)
+
 // Product represents a product in the system
 type Product struct {
-	ProductID              int             `json:"product_id"`
-	Name                   string          `json:"name"`
-	Description            string          `json:"description"`
-	Category               string          `json:"category"`
-	Price                  float64         `json:"price"`
-	Availability           int             `json:"availability"`
-	Ingredients            string          `json:"ingredients"`
-	NutritionalInformation string          `json:"nutritional_information"`
-	ImageURL               string          `json:"image_url"`
-	ProductWeights         []ProductWeight `json:"product_weights"`
+	ID              int              `json:"id"`
+	Name            string           `json:"name"`
+	Description     string           `json:"description"`
+	Category        string           `json:"category"`
+	Ingredients     string           `json:"ingredients"`
+	NutritionalInfo string           `json:"nutritional_info"`
+	ImageURLs       []string         `json:"image_urls"`
+	Weights         []*ProductWeight `json:"weights"`
+	CreatedAt       time.Time        `json:"created_at"`
+	UpdatedAt       time.Time        `json:"updated_at"`
+}
+
+// ProductWeight represents a specific weight variant of a product
+type ProductWeight struct {
+	ID                   int
+	ProductID            int
+	Weight               int
+	Price                float64
+	StockAvailability    int
+	CreatedAt, UpdatedAt time.Time
 }

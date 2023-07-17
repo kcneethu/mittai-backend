@@ -25,6 +25,7 @@ require (
 	github.com/go-openapi/spec v0.20.9 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/lib/pq v1.10.9
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/swaggo/http-swagger v1.3.4

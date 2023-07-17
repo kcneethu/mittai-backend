@@ -1,44 +1,12 @@
-basePath: /
 definitions:
-  handlers.AddUserAddressRequest:
-    properties:
-      address:
-        $ref: '#/definitions/models.Address'
-      userID:
-        type: integer
-    type: object
-  handlers.CreateUserResponse:
-    properties:
-      userID:
-        type: integer
-    type: object
-  handlers.EmptyResponse:
-    type: object
-  handlers.ErrorResponse:
-    properties:
-      error:
-        type: string
-    type: object
-  handlers.UpdateUserAddressRequest:
-    properties:
-      address:
-        $ref: '#/definitions/models.Address'
-      userID:
-        type: integer
-    type: object
-  handlers.UpdateUserPhoneRequest:
-    properties:
-      phoneNumber:
-        type: string
-      userID:
-        type: integer
-    type: object
   models.Address:
     properties:
-      address:
-        type: string
       addressID:
         type: integer
+      addressLine1:
+        type: string
+      addressLine2:
+        type: string
       city:
         type: string
       state:
@@ -48,261 +16,455 @@ definitions:
       zipCode:
         type: string
     type: object
-  models.Order:
+  models.Cart:
     properties:
-      delivery_address:
+      created_at:
         type: string
+      id:
+        type: integer
       items:
         items:
-          $ref: '#/definitions/models.OrderItem'
+          $ref: '#/definitions/models.CartItem'
         type: array
-      order_date:
+      updated_at:
         type: string
-      order_id:
-        type: integer
-      payment_method:
-        type: string
-      status:
-        type: string
-      total_amount:
-        type: number
       user_id:
         type: integer
     type: object
-  models.OrderItem:
+  models.CartItem:
     properties:
-      customization_options:
+      created_at:
         type: string
-      order_id:
-        type: integer
-      order_item_id:
-        type: integer
-      price:
-        type: number
-      product_weight_id:
-        type: integer
+      product:
+        $ref: '#/definitions/models.ProductWeight'
       quantity:
         type: integer
+      updated_at:
+        type: string
     type: object
   models.Product:
     properties:
-      availability:
-        type: integer
       category:
+        type: string
+      created_at:
         type: string
       description:
         type: string
-      image_url:
-        type: string
+      id:
+        type: integer
+      image_urls:
+        items:
+          type: string
+        type: array
       ingredients:
         type: string
       name:
         type: string
-      nutritional_information:
+      nutritional_info:
         type: string
-      price:
-        type: number
-      product_id:
-        type: integer
-      product_weights:
+      updated_at:
+        type: string
+      weights:
         items:
           $ref: '#/definitions/models.ProductWeight'
         type: array
     type: object
   models.ProductWeight:
     properties:
-      product_id:
+      createdAt:
+        type: string
+      id:
         type: integer
-      product_weight_id:
+      price:
+        type: number
+      productID:
+        type: integer
+      stockAvailability:
         type: integer
       weight:
-        type: string
+        type: integer
     type: object
   models.User:
     properties:
       address:
-        type: string
+        items:
+          $ref: '#/definitions/models.Address'
+        type: array
       contactNumber:
         type: string
       email:
         type: string
-      name:
+      firstName:
+        type: string
+      lastName:
         type: string
       userID:
         type: integer
+      verifiedAccount:
+        type: boolean
     type: object
-host: localhost:8080
+  services.AddProductRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      image_urls:
+        items:
+          type: string
+        type: array
+      ingredients:
+        type: string
+      name:
+        type: string
+      nutritional_info:
+        type: string
+    type: object
+  services.AddProductResponse:
+    properties:
+      message:
+        type: string
+      product_id:
+        type: integer
+    type: object
+  services.AddProductWeightRequest:
+    properties:
+      price:
+        type: number
+      stock_availability:
+        type: integer
+      weight:
+        type: integer
+    type: object
+  services.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  services.SuccessResponse:
+    properties:
+      message:
+        type: string
+      product_id:
+        type: integer
+    type: object
+  services.UpdateProductWeightRequest:
+    properties:
+      price:
+        type: number
+      stock_availability:
+        type: integer
+      weight:
+        type: integer
+    type: object
 info:
   contact: {}
-  description: API documentation for Mittai Backend
-  title: Mittai Backend API
-  version: "1.0"
 paths:
-  /admin/flush:
-    delete:
-      description: Deletes all records from all tables
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.EmptyResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Flush all tables
-      tags:
-      - administration
-  /orders:
+  /cart/{userID}:
     get:
-      description: Retrieves a list of all orders
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User's cart retrieved successfully
           schema:
-            items:
-              $ref: '#/definitions/models.Order'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Retrieve all orders
+            $ref: '#/definitions/models.Cart'
+      summary: Get the user's cart by user ID
       tags:
-      - orders
+      - Cart
     post:
       consumes:
       - application/json
-      description: Creates a new order
       parameters:
-      - description: Order object
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Cart item object
         in: body
-        name: order
+        name: cartItem
         required: true
         schema:
-          $ref: '#/definitions/models.Order'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            additionalProperties:
-              type: integer
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Create a new order
-      tags:
-      - orders
-  /products:
-    get:
-      description: Retrieves a list of all products
+          $ref: '#/definitions/models.CartItem'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Item added to cart successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Add an item to the cart
+      tags:
+      - Cart
+  /cart/{userID}/{productWeightID}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Product Weight ID
+        in: path
+        name: productWeightID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Cart item removed successfully
+          schema:
+            type: string
+        "404":
+          description: Cart item not found
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Remove a cart item from the cart
+      tags:
+      - Cart
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Product Weight ID
+        in: path
+        name: productWeightID
+        required: true
+        type: string
+      - description: Cart item object
+        in: body
+        name: cartItem
+        required: true
+        schema:
+          $ref: '#/definitions/models.CartItem'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cart item updated successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "404":
+          description: Cart item not found
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Update the quantity of a cart item
+      tags:
+      - Cart
+  /products:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of products
           schema:
             items:
               $ref: '#/definitions/models.Product'
             type: array
         "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Retrieve all products
+          description: Failed to retrieve products
+      summary: List all products
       tags:
-      - products
+      - Products
     post:
       consumes:
       - application/json
-      description: Creates a new product in the database
       parameters:
-      - description: Product object
+      - description: Product details
         in: body
         name: product
         required: true
         schema:
-          $ref: '#/definitions/models.Product'
+          $ref: '#/definitions/services.AddProductRequest'
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: Product added successfully
           schema:
-            additionalProperties:
-              type: integer
-            type: object
+            $ref: '#/definitions/services.AddProductResponse'
         "400":
-          description: Bad Request
+          description: Invalid request body
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/services.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to add product
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Create a new product
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Add a new product to the inventory
       tags:
-      - products
-  /products/{product_id}:
-    get:
-      description: Retrieves a product by its ID
+      - Products
+  /products/{id}:
+    delete:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: id
         required: true
-        type: integer
+        type: string
+      responses:
+        "200":
+          description: Product deleted successfully
+        "500":
+          description: Failed to delete product
+      summary: Delete a product from the inventory
+      tags:
+      - Products
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Product details
           schema:
             $ref: '#/definitions/models.Product'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Retrieve a product by ID
+          description: Failed to retrieve product details
+      summary: Get product details by ID
       tags:
-      - products
-  /users:
-    get:
-      description: Retrieves all users from the database
+      - Products
+    put:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Product description
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: Product category
+        in: formData
+        name: category
+        required: true
+        type: string
+      - description: Product ingredients
+        in: formData
+        name: ingredients
+        required: true
+        type: string
+      - description: Product nutritional information
+        in: formData
+        name: nutritional_info
+        required: true
+        type: string
+      - description: Product image URLs (comma-separated)
+        in: formData
+        name: image_urls
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Product updated successfully
+        "400":
+          description: Invalid form data
+        "500":
+          description: Failed to update product
+      summary: Update an existing product in the inventory
+      tags:
+      - Products
+  /productweight/{productID}/weights:
+    post:
+      parameters:
+      - description: Product ID
+        in: path
+        name: productID
+        required: true
+        type: string
+      - description: Product weight details
+        in: body
+        name: weight
+        required: true
+        schema:
+          $ref: '#/definitions/services.AddProductWeightRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Weight added successfully
           schema:
-            items:
-              $ref: '#/definitions/models.User'
-            type: array
+            $ref: '#/definitions/services.SuccessResponse'
+        "400":
+          description: Invalid request body or product ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to add weight
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Retrieve all users
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Add a new weight variant for a product
       tags:
-      - users
+      - Product Weights
+  /productweight/{productID}/weights/{weightID}:
+    put:
+      parameters:
+      - description: Product ID
+        in: path
+        name: productID
+        required: true
+        type: string
+      - description: Weight ID
+        in: path
+        name: weightID
+        required: true
+        type: string
+      - description: Product weight details
+        in: body
+        name: weight
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateProductWeightRequest'
+      responses:
+        "200":
+          description: Weight updated successfully
+        "400":
+          description: Invalid request body or product/weight ID
+        "500":
+          description: Failed to update weight
+      summary: Update an existing weight variant for a product
+      tags:
+      - Product Weights
+  /users:
     post:
       consumes:
       - application/json
-      description: Creates a new user in the database
       parameters:
       - description: User object
         in: body
@@ -313,129 +475,99 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: User created successfully
           schema:
-            $ref: '#/definitions/handlers.CreateUserResponse'
+            type: string
         "400":
-          description: Bad Request
+          description: Invalid request body
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/services.ErrorResponse'
+        "409":
+          description: Contact number already exists
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to create user
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/services.ErrorResponse'
       summary: Create a new user
       tags:
-      - users
-  /users/{userID}/addresses:
-    get:
-      description: Retrieves all addresses for a user
+      - Users
+  /users/{id}:
+    delete:
       parameters:
       - description: User ID
         in: path
-        name: userID
+        name: id
         required: true
-        type: integer
+        type: string
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            type: string
+        "500":
+          description: Failed to delete user
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Delete a user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User retrieved successfully
           schema:
-            items:
-              $ref: '#/definitions/models.Address'
-            type: array
+            $ref: '#/definitions/models.User'
         "500":
-          description: Internal Server Error
+          description: Failed to retrieve user
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get user addresses
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Retrieve a user by ID
       tags:
-      - users
-  /users/address:
-    post:
-      consumes:
-      - application/json
-      description: Adds a new address for a user
-      parameters:
-      - description: Add user address request object
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.AddUserAddressRequest'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.EmptyResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Add user address
-      tags:
-      - users
+      - Users
     put:
       consumes:
       - application/json
-      description: Updates an existing address for a user
       parameters:
-      - description: Update user address request object
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User object
         in: body
-        name: request
+        name: user
         required: true
         schema:
-          $ref: '#/definitions/handlers.UpdateUserAddressRequest'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.EmptyResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Update user address
-      tags:
-      - users
-  /users/phone:
-    put:
-      consumes:
+          $ref: '#/definitions/models.User'
+      produces:
       - application/json
-      description: Updates the phone number for a user
-      parameters:
-      - description: Update user phone request object
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.UpdateUserPhoneRequest'
       responses:
         "200":
-          description: OK
+          description: User updated successfully
           schema:
-            $ref: '#/definitions/handlers.EmptyResponse'
+            type: string
         "400":
-          description: Bad Request
+          description: Invalid request body
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/services.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to update user
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Update user phone number
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Update a user
       tags:
-      - users
-schemes:
-- http
+      - Users
 swagger: "2.0"

@@ -16,59 +16,8 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/admin/flush": {
-            "delete": {
-                "description": "Deletes all records from all tables",
-                "tags": [
-                    "administration"
-                ],
-                "summary": "Flush all tables",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.EmptyResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/orders": {
+        "/cart/{userID}": {
             "get": {
-                "description": "Retrieves a list of all orders",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "Retrieve all orders",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Order"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Creates a new order",
                 "consumes": [
                     "application/json"
                 ],
@@ -76,40 +25,162 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "orders"
+                    "Cart"
                 ],
-                "summary": "Create a new order",
+                "summary": "Get the user's cart by user ID",
                 "parameters": [
                     {
-                        "description": "Order object",
-                        "name": "order",
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User's cart retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.Cart"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Add an item to the cart",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Cart item object",
+                        "name": "cartItem",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Order"
+                            "$ref": "#/definitions/models.CartItem"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "Item added to cart successfully",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "integer"
-                            }
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cart/{userID}/{productWeightID}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Update the quantity of a cart item",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product Weight ID",
+                        "name": "productWeightID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Cart item object",
+                        "name": "cartItem",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CartItem"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart item updated successfully",
+                        "schema": {
+                            "type": "string"
                         }
                     },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "400": {
+                        "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart item not found",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Remove a cart item from the cart",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product Weight ID",
+                        "name": "productWeightID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart item removed successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart item not found",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     }
                 }
@@ -117,17 +188,16 @@ const docTemplate = `{
         },
         "/products": {
             "get": {
-                "description": "Retrieves a list of all products",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "products"
+                    "Products"
                 ],
-                "summary": "Retrieve all products",
+                "summary": "List all products",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of products",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -136,15 +206,11 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
+                        "description": "Failed to retrieve products"
                     }
                 }
             },
             "post": {
-                "description": "Creates a new product in the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -152,116 +218,262 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "products"
+                    "Products"
                 ],
-                "summary": "Create a new product",
+                "summary": "Add a new product to the inventory",
                 "parameters": [
                     {
-                        "description": "Product object",
+                        "description": "Product details",
                         "name": "product",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Product"
+                            "$ref": "#/definitions/services.AddProductRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "Product added successfully",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "integer"
-                            }
+                            "$ref": "#/definitions/services.AddProductResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to add product",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/products/{product_id}": {
+        "/products/{id}": {
             "get": {
-                "description": "Retrieves a product by its ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "products"
+                    "Products"
                 ],
-                "summary": "Retrieve a product by ID",
+                "summary": "Get product details by ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Product ID",
-                        "name": "product_id",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Product details",
                         "schema": {
                             "$ref": "#/definitions/models.Product"
                         }
                     },
+                    "500": {
+                        "description": "Failed to retrieve product details"
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Update an existing product in the inventory",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product name",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product description",
+                        "name": "description",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product category",
+                        "name": "category",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product ingredients",
+                        "name": "ingredients",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product nutritional information",
+                        "name": "nutritional_info",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product image URLs (comma-separated)",
+                        "name": "image_urls",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product updated successfully"
+                    },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid form data"
+                    },
+                    "500": {
+                        "description": "Failed to update product"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Delete a product from the inventory",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product deleted successfully"
+                    },
+                    "500": {
+                        "description": "Failed to delete product"
+                    }
+                }
+            }
+        },
+        "/productweight/{productID}/weights": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product Weights"
+                ],
+                "summary": "Add a new weight variant for a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "productID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product weight details",
+                        "name": "weight",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.AddProductWeightRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Weight added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/services.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or product ID",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to add weight",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/users": {
-            "get": {
-                "description": "Retrieves all users from the database",
-                "produces": [
-                    "application/json"
-                ],
+        "/productweight/{productID}/weights/{weightID}": {
+            "put": {
                 "tags": [
-                    "users"
+                    "Product Weights"
                 ],
-                "summary": "Retrieve all users",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.User"
-                            }
-                        }
+                "summary": "Update an existing weight variant for a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "productID",
+                        "in": "path",
+                        "required": true
                     },
-                    "500": {
-                        "description": "Internal Server Error",
+                    {
+                        "type": "string",
+                        "description": "Weight ID",
+                        "name": "weightID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product weight details",
+                        "name": "weight",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.UpdateProductWeightRequest"
                         }
                     }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Weight updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request body or product/weight ID"
+                    },
+                    "500": {
+                        "description": "Failed to update weight"
+                    }
                 }
-            },
+            }
+        },
+        "/users": {
             "post": {
-                "description": "Creates a new user in the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -269,7 +481,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
                 "summary": "Create a new user",
                 "parameters": [
@@ -284,187 +496,144 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "User created successfully",
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreateUserResponse"
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Contact number already exists",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to create user",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/users/address": {
-            "put": {
-                "description": "Updates an existing address for a user",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Update user address",
-                "parameters": [
-                    {
-                        "description": "Update user address request object",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.UpdateUserAddressRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.EmptyResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Adds a new address for a user",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Add user address",
-                "parameters": [
-                    {
-                        "description": "Add user address request object",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.AddUserAddressRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.EmptyResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/phone": {
-            "put": {
-                "description": "Updates the phone number for a user",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Update user phone number",
-                "parameters": [
-                    {
-                        "description": "Update user phone request object",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.UpdateUserPhoneRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.EmptyResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{userID}/addresses": {
+        "/users/{id}": {
             "get": {
-                "description": "Retrieves all addresses for a user",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "Users"
                 ],
-                "summary": "Get user addresses",
+                "summary": "Retrieve a user by ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "User ID",
-                        "name": "userID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "User retrieved successfully",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Address"
-                            }
+                            "$ref": "#/definitions/models.User"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to retrieve user",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User object",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update user",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete user",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     }
                 }
@@ -472,66 +641,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AddUserAddressRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "$ref": "#/definitions/models.Address"
-                },
-                "userID": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handlers.CreateUserResponse": {
-            "type": "object",
-            "properties": {
-                "userID": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handlers.EmptyResponse": {
-            "type": "object"
-        },
-        "handlers.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.UpdateUserAddressRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "$ref": "#/definitions/models.Address"
-                },
-                "userID": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handlers.UpdateUserPhoneRequest": {
-            "type": "object",
-            "properties": {
-                "phoneNumber": {
-                    "type": "string"
-                },
-                "userID": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.Address": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
-                },
                 "addressID": {
                     "type": "integer"
+                },
+                "addressLine1": {
+                    "type": "string"
+                },
+                "addressLine2": {
+                    "type": "string"
                 },
                 "city": {
                     "type": "string"
@@ -547,75 +667,66 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Order": {
+        "models.Cart": {
             "type": "object",
             "properties": {
-                "delivery_address": {
+                "created_at": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.OrderItem"
+                        "$ref": "#/definitions/models.CartItem"
                     }
                 },
-                "order_date": {
+                "updated_at": {
                     "type": "string"
-                },
-                "order_id": {
-                    "type": "integer"
-                },
-                "payment_method": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "total_amount": {
-                    "type": "number"
                 },
                 "user_id": {
                     "type": "integer"
                 }
             }
         },
-        "models.OrderItem": {
+        "models.CartItem": {
             "type": "object",
             "properties": {
-                "customization_options": {
+                "created_at": {
                     "type": "string"
                 },
-                "order_id": {
-                    "type": "integer"
-                },
-                "order_item_id": {
-                    "type": "integer"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "product_weight_id": {
-                    "type": "integer"
+                "product": {
+                    "$ref": "#/definitions/models.ProductWeight"
                 },
                 "quantity": {
                     "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
         "models.Product": {
             "type": "object",
             "properties": {
-                "availability": {
-                    "type": "integer"
-                },
                 "category": {
+                    "type": "string"
+                },
+                "created_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "image_url": {
-                    "type": "string"
+                "id": {
+                    "type": "integer"
+                },
+                "image_urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "ingredients": {
                     "type": "string"
@@ -623,16 +734,13 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "nutritional_information": {
+                "nutritional_info": {
                     "type": "string"
                 },
-                "price": {
-                    "type": "number"
+                "updated_at": {
+                    "type": "string"
                 },
-                "product_id": {
-                    "type": "integer"
-                },
-                "product_weights": {
+                "weights": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.ProductWeight"
@@ -643,14 +751,23 @@ const docTemplate = `{
         "models.ProductWeight": {
             "type": "object",
             "properties": {
-                "product_id": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "integer"
                 },
-                "product_weight_id": {
+                "price": {
+                    "type": "number"
+                },
+                "productID": {
+                    "type": "integer"
+                },
+                "stockAvailability": {
                     "type": "integer"
                 },
                 "weight": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -658,7 +775,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Address"
+                    }
                 },
                 "contactNumber": {
                     "type": "string"
@@ -666,10 +786,100 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "name": {
+                "firstName": {
+                    "type": "string"
+                },
+                "lastName": {
                     "type": "string"
                 },
                 "userID": {
+                    "type": "integer"
+                },
+                "verifiedAccount": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "services.AddProductRequest": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "image_urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ingredients": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nutritional_info": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.AddProductResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.AddProductWeightRequest": {
+            "type": "object",
+            "properties": {
+                "price": {
+                    "type": "number"
+                },
+                "stock_availability": {
+                    "type": "integer"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.UpdateProductWeightRequest": {
+            "type": "object",
+            "properties": {
+                "price": {
+                    "type": "number"
+                },
+                "stock_availability": {
+                    "type": "integer"
+                },
+                "weight": {
                     "type": "integer"
                 }
             }
@@ -679,12 +889,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/",
-	Schemes:          []string{"http"},
-	Title:            "Mittai Backend API",
-	Description:      "API documentation for Mittai Backend",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
+	Schemes:          []string{},
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
