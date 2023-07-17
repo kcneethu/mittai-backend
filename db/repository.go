@@ -91,7 +91,7 @@ func (r *Repository) createCartTable() error {
 	query := `CREATE TABLE IF NOT EXISTS carts (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER NOT NULL,
-		items TEXT NOT NULL,
+		items TEXT,
 		created_at DATETIME NOT NULL,
 		updated_at DATETIME NOT NULL,
 		FOREIGN KEY (user_id) REFERENCES users (user_id)
@@ -108,12 +108,10 @@ func (r *Repository) createCartItemTable() error {
 		cart_id INTEGER NOT NULL,
 		product_weight_id INTEGER NOT NULL,
 		quantity INTEGER NOT NULL,
-		created_at DATETIME NOT NULL,
-		updated_at DATETIME NOT NULL,
-		user_id INTEGER NOT NULL, -- Add the user_id column
+		created_at DATETIME NULL,
+		updated_at DATETIME NULL,
 		FOREIGN KEY (cart_id) REFERENCES carts (id),
-		FOREIGN KEY (product_weight_id) REFERENCES product_weights (id),
-		FOREIGN KEY (user_id) REFERENCES users (user_id) -- Add the foreign key constraint
+		FOREIGN KEY (product_weight_id) REFERENCES product_weights (id)
 	);`
 
 	_, err := r.Exec(query)

@@ -41,7 +41,13 @@ const docTemplate = `{
                     "200": {
                         "description": "User's cart retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/models.Cart"
+                            "$ref": "#/definitions/services.GetCartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
                         }
                     }
                 }
@@ -923,6 +929,17 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "services.GetCartResponse": {
+            "type": "object",
+            "properties": {
+                "cart": {
+                    "$ref": "#/definitions/models.Cart"
+                },
+                "totalPrice": {
+                    "type": "number"
                 }
             }
         },

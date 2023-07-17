@@ -144,6 +144,13 @@ definitions:
       message:
         type: string
     type: object
+  services.GetCartResponse:
+    properties:
+      cart:
+        $ref: '#/definitions/models.Cart'
+      totalPrice:
+        type: number
+    type: object
   services.SuccessResponse:
     properties:
       message:
@@ -179,7 +186,11 @@ paths:
         "200":
           description: User's cart retrieved successfully
           schema:
-            $ref: '#/definitions/models.Cart'
+            $ref: '#/definitions/services.GetCartResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
       summary: Get the user's cart by user ID
       tags:
       - Cart
