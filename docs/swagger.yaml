@@ -183,35 +183,6 @@ paths:
       summary: Get the user's cart by user ID
       tags:
       - Cart
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: User ID
-        in: path
-        name: userID
-        required: true
-        type: string
-      - description: Cart item object
-        in: body
-        name: cartItem
-        required: true
-        schema:
-          $ref: '#/definitions/models.CartItem'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Item added to cart successfully
-          schema:
-            type: string
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-      summary: Add an item to the cart
-      tags:
-      - Cart
   /cart/{userID}/{productWeightID}:
     delete:
       consumes:
@@ -245,6 +216,38 @@ paths:
       summary: Remove a cart item from the cart
       tags:
       - Cart
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Product Weight ID
+        in: path
+        name: productWeightID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item added to cart successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID or product weight ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "404":
+          description: Cart not found or Product weight not found
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Add an item to the cart
+      tags:
+      - Cart
     put:
       consumes:
       - application/json
@@ -259,12 +262,11 @@ paths:
         name: productWeightID
         required: true
         type: string
-      - description: Cart item object
-        in: body
-        name: cartItem
+      - description: Quantity
+        in: query
+        name: quantity
         required: true
-        schema:
-          $ref: '#/definitions/models.CartItem'
+        type: integer
       produces:
       - application/json
       responses:
@@ -273,7 +275,7 @@ paths:
           schema:
             type: string
         "400":
-          description: Invalid request body
+          description: Invalid user ID or product weight ID or quantity
           schema:
             $ref: '#/definitions/services.ErrorResponse'
         "404":
@@ -287,7 +289,6 @@ paths:
     post:
       consumes:
       - application/json
-      description: This endpoint will clear all items from a user's cart.
       parameters:
       - description: User ID
         in: path

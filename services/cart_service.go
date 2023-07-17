@@ -28,7 +28,7 @@ func NewCartService(repository *db.Repository) *CartService {
 
 // RegisterRoutes registers the cart service routes
 func (cs *CartService) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/cart/{userID}", cs.AddToCart).Methods("POST")
+	r.HandleFunc("/cart/{userID}/{productWeightID}", cs.AddToCart).Methods("POST")
 	r.HandleFunc("/cart/{userID}", cs.GetCartByUserID).Methods("GET")
 	r.HandleFunc("/cart/{userID}/{productWeightID}", cs.UpdateCartItem).Methods("PUT")
 	r.HandleFunc("/cart/{userID}/{productWeightID}", cs.RemoveCartItem).Methods("DELETE")
@@ -41,21 +41,13 @@ func (cs *CartService) RegisterRoutes(r *mux.Router) {
 // @Accept json
 // @Produce json
 // @Param userID path string true "User ID"
-// @Param cartItem body models.CartItem true "Cart item object"
+// @Param productWeightID path string true "Product Weight ID"
 // @Success 200 {string} string "Item added to cart successfully"
-// @Failure 400 {object} ErrorResponse "Invalid request body"
-// @Router /cart/{userID} [post]
+// @Failure 400 {object} ErrorResponse "Invalid user ID or product weight ID"
+// @Failure 404 {object} ErrorResponse "Cart not found or Product weight not found"
+// @Router /cart/{userID}/{productWeightID} [post]
 func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-
-	var cartItem models.CartItem
-	err := json.NewDecoder(r.Body).Decode(&cartItem)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
 	userIDstr := vars["userID"]
 
 	userID, err := strconv.Atoi(userIDstr)
@@ -63,6 +55,31 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
+	}
+
+	// Get the product weight ID from the request parameters
+	productWeightIDStr := vars["productWeightID"]
+	productWeightID, err := strconv.Atoi(productWeightIDStr)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid product weight ID", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch the product weight details from the database
+	productWeight, err := cs.getProductWeightByID(productWeightID)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to fetch product weight details", http.StatusInternalServerError)
+		return
+	}
+
+	// Create a new cart item
+	newCartItem := &models.CartItem{
+		Product:   productWeight,
+		Quantity:  1, // Set the default quantity to 1, or you can extract it from the request if needed
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	// Get the user's cart from the database
@@ -79,31 +96,13 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the item already exists in the cart
 	for _, item := range cart.Items {
-		if item.Product.ID == cartItem.Product.ID {
+		if item.Product.ID == newCartItem.Product.ID {
 			// Item already exists, update the quantity
-			item.Quantity += cartItem.Quantity
+			item.Quantity += newCartItem.Quantity
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("Item added to cart successfully"))
 			return
 		}
-	}
-
-	// Item does not exist, create a new cart item
-
-	// Fetch the product weight details from the database based on productWeightID
-	productWeightID := cartItem.Product.ID
-	productWeight, err := cs.getProductWeightByID(productWeightID)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Failed to fetch product weight details", http.StatusInternalServerError)
-		return
-	}
-
-	newCartItem := &models.CartItem{
-		Product:   productWeight,
-		Quantity:  cartItem.Quantity,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
 	}
 
 	cart.Items = append(cart.Items, newCartItem)
@@ -152,10 +151,16 @@ func (cs *CartService) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 		cs.CartDB[userID] = cart
 	}
 
+	// Recalculate the total price based on the quantity and price of each item
+	totalPrice := 0.0
+	for _, item := range cart.Items {
+		totalPrice += float64(item.Quantity) * item.Product.Price
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"cart":       cart,
-		"totalPrice": cart.TotalPrice,
+		"totalPrice": totalPrice,
 	})
 }
 
@@ -166,23 +171,14 @@ func (cs *CartService) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param userID path string true "User ID"
 // @Param productWeightID path string true "Product Weight ID"
-// @Param cartItem body models.CartItem true "Cart item object"
+// @Param quantity query int true "Quantity"
 // @Success 200 {string} string "Cart item updated successfully"
-// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 400 {object} ErrorResponse "Invalid user ID or product weight ID or quantity"
 // @Failure 404 {object} ErrorResponse "Cart item not found"
 // @Router /cart/{userID}/{productWeightID} [put]
 func (cs *CartService) UpdateCartItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	productWeightIDStr := vars["productWeightID"]
-
-	var cartItem models.CartItem
-	err := json.NewDecoder(r.Body).Decode(&cartItem)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
 	userIDstr := vars["userID"]
 
 	userID, err := strconv.Atoi(userIDstr)
@@ -210,20 +206,19 @@ func (cs *CartService) UpdateCartItem(w http.ResponseWriter, r *http.Request) {
 	// Find the cart item by matching the product's ID
 	for _, item := range cart.Items {
 		if item.Product != nil && item.Product.ID == productWeightID {
-			// Fetch the product weight details from the database based on productWeightID
-			productWeight, err := cs.getProductWeightByID(productWeightID)
+			// Update the cart item quantity
+			quantityStr := r.URL.Query().Get("quantity")
+			quantity, err := strconv.Atoi(quantityStr)
 			if err != nil {
 				log.Println(err)
-				http.Error(w, "Failed to fetch product weight details", http.StatusInternalServerError)
+				http.Error(w, "Invalid quantity", http.StatusBadRequest)
 				return
 			}
 
-			// Update the cart item with the fetched product weight details
-			item.Product = productWeight
-			item.Quantity = cartItem.Quantity
+			item.Quantity = quantity
 
 			// Update the cart item quantity in the database
-			err = cs.updateCartItemQuantity(userID, productWeightID, cartItem.Quantity)
+			err = cs.updateCartItemQuantity(userID, productWeightID, quantity)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "Failed to update cart item quantity", http.StatusInternalServerError)
@@ -401,8 +396,8 @@ func (cs *CartService) updateCartItemQuantity(userID, productWeightID, quantity 
 	return nil
 }
 
+// ClearCart clears the cart for a specific user
 // @Summary Clear the cart for a specific user
-// @Description This endpoint will clear all items from a user's cart.
 // @Tags Cart
 // @Accept json
 // @Produce json
@@ -430,7 +425,6 @@ func (cs *CartService) ClearCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cart.Items = make([]*models.CartItem, 0)
-
 	cart.TotalPrice = 0
 
 	err = cs.updateCart(cart)

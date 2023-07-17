@@ -45,55 +45,10 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Add an item to the cart",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Cart item object",
-                        "name": "cartItem",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.CartItem"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Item added to cart successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/cart/{userID}/clear": {
             "post": {
-                "description": "This endpoint will clear all items from a user's cart.",
                 "consumes": [
                     "application/json"
                 ],
@@ -169,13 +124,11 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Cart item object",
-                        "name": "cartItem",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.CartItem"
-                        }
+                        "type": "integer",
+                        "description": "Quantity",
+                        "name": "quantity",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -186,13 +139,61 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request body",
+                        "description": "Invalid user ID or product weight ID or quantity",
                         "schema": {
                             "$ref": "#/definitions/services.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Cart item not found",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Add an item to the cart",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product Weight ID",
+                        "name": "productWeightID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item added to cart successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID or product weight ID",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart not found or Product weight not found",
                         "schema": {
                             "$ref": "#/definitions/services.ErrorResponse"
                         }
