@@ -431,13 +431,25 @@ func (cs *CartService) updateCart(cart *models.Cart) error {
 	var err error
 	if cart.ID == 0 {
 		// Create a new cart in the database
-		stmt, err := cs.Repository.DB.Prepare("INSERT INTO carts (user_id, created_at, updated_at) VALUES (?, ?, ?)")
+		stmt, err := cs.Repository.DB.Prepare("INSERT INTO carts (user_id, items, created_at, updated_at) VALUES (?, ?, ?, ?)")
 		if err != nil {
 			return err
 		}
 		defer stmt.Close()
 
-		result, err := stmt.Exec(cart.UserID, cart.CreatedAt, time.Now())
+		// Create an array of cart item IDs
+		cartItemIDs := make([]int, len(cart.Items))
+		for i, item := range cart.Items {
+			cartItemIDs[i] = item.Product.ID
+		}
+
+		// Convert the array of cart item IDs to JSON
+		itemsJSON, err := json.Marshal(cartItemIDs)
+		if err != nil {
+			return err
+		}
+
+		result, err := stmt.Exec(cart.UserID, itemsJSON, cart.CreatedAt, cart.UpdatedAt)
 		if err != nil {
 			return err
 		}
@@ -451,13 +463,34 @@ func (cs *CartService) updateCart(cart *models.Cart) error {
 		cart.ID = int(cartID)
 	} else {
 		// Update the existing cart in the database
-		stmt, err := cs.Repository.DB.Prepare("UPDATE carts SET updated_at = ? WHERE id = ?")
+		// Fetch the current items from the database
+		currentItems, err := cs.getCartItemsByCartID(cart.ID)
+		if err != nil {
+			return err
+		}
+
+		// Append the new items to the current items
+		currentItems = append(currentItems, cart.Items...)
+
+		// Create an array of cart item IDs
+		cartItemIDs := make([]int, len(currentItems))
+		for i, item := range currentItems {
+			cartItemIDs[i] = item.Product.ID
+		}
+
+		// Convert the array of cart item IDs to JSON
+		itemsJSON, err := json.Marshal(cartItemIDs)
+		if err != nil {
+			return err
+		}
+
+		stmt, err := cs.Repository.DB.Prepare("UPDATE carts SET items = ?, created_at = ?, updated_at = ? WHERE id = ?")
 		if err != nil {
 			return err
 		}
 		defer stmt.Close()
 
-		_, err = stmt.Exec(time.Now(), cart.ID)
+		_, err = stmt.Exec(itemsJSON, cart.CreatedAt, cart.UpdatedAt, cart.ID)
 		if err != nil {
 			return err
 		}
@@ -489,14 +522,14 @@ func (cs *CartService) updateCart(cart *models.Cart) error {
 // updateCartItemQuantity updates the quantity of a cart item in the database
 func (cs *CartService) updateCartItemQuantity(userID, productWeightID, quantity int) error {
 	// Prepare the SQL statement
-	stmt, err := cs.Repository.DB.Prepare("UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND product_weight_id = ?")
+	stmt, err := cs.Repository.DB.Prepare("UPDATE cart_items SET quantity = ?, updated_at = ? WHERE cart_id = ? AND product_weight_id = ?")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
 	// Execute the SQL statement
-	_, err = stmt.Exec(quantity, userID, productWeightID)
+	_, err = stmt.Exec(quantity, time.Now(), userID, productWeightID)
 	if err != nil {
 		return err
 	}
@@ -506,7 +539,12 @@ func (cs *CartService) updateCartItemQuantity(userID, productWeightID, quantity 
 
 // getCartByUserID retrieves the user's cart from the database
 func (cs *CartService) getCartByUserID(userID int) (*models.Cart, error) {
-	query := "SELECT id, user_id, created_at, updated_at FROM carts WHERE user_id = ?"
+	query := `
+		SELECT c.id, c.user_id, c.created_at, c.updated_at, ci.id, ci.product_weight_id, ci.quantity, ci.created_at, ci.updated_at
+		FROM carts AS c
+		LEFT JOIN cart_items AS ci ON c.id = ci.cart_id
+		WHERE c.user_id = ?
+	`
 
 	// Prepare the query
 	stmt, err := cs.Repository.DB.Prepare(query)
@@ -516,65 +554,116 @@ func (cs *CartService) getCartByUserID(userID int) (*models.Cart, error) {
 	defer stmt.Close()
 
 	// Execute the query
-	row := stmt.QueryRow(userID)
-
-	// Create variables to store the retrieved data
-	var (
-		id        int
-		createdAt time.Time
-		updatedAt time.Time
-	)
-
-	// Scan the row into the variables
-	err = row.Scan(&id, &userID, &createdAt, &updatedAt)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // Return nil if no cart found
-		}
-		return nil, err
-	}
-
-	// Create a new cart instance
-	cart := &models.Cart{
-		ID:        id,
-		UserID:    userID,
-		Items:     make([]*models.CartItem, 0),
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
-	}
-
-	// Retrieve the cart items from the database
-	rows, err := cs.Repository.DB.Query("SELECT product_weight_id, quantity FROM cart_items WHERE cart_id = ?", cart.ID)
+	rows, err := stmt.Query(userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	cart := &models.Cart{
+		UserID: userID,
+		Items:  make([]*models.CartItem, 0),
+	}
+
 	for rows.Next() {
-		var productWeightID, quantity int
-		err := rows.Scan(&productWeightID, &quantity)
+		var (
+			cartID            int
+			userID            int
+			cartCreatedAt     time.Time
+			cartUpdatedAt     time.Time
+			cartItemID        sql.NullInt64
+			productWeightID   int
+			quantity          sql.NullInt64
+			cartItemCreatedAt sql.NullTime
+			cartItemUpdatedAt sql.NullTime
+		)
+
+		// Scan the row into the variables
+		err := rows.Scan(
+			&cartID, &userID, &cartCreatedAt, &cartUpdatedAt,
+			&cartItemID, &productWeightID, &quantity, &cartItemCreatedAt, &cartItemUpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
 
-		// Retrieve the product weight details from the database
-		productWeight, err := cs.getProductWeightByID(productWeightID)
-		if err != nil {
-			return nil, err
+		// Create a new cart if it doesn't exist
+		if cart.ID == 0 {
+			cart.ID = cartID
+			cart.CreatedAt = cartCreatedAt
+			cart.UpdatedAt = cartUpdatedAt
 		}
 
-		// Create a new cart item and append it to the cart's items
-		cartItem := &models.CartItem{
-			Product:   productWeight,
-			Quantity:  quantity,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+		// Add the cart item to the cart
+		if cartItemID.Valid {
+			cartItem := &models.CartItem{
+				Product: &models.ProductWeight{
+					ID: productWeightID,
+				},
+				Quantity:  int(quantity.Int64),
+				CreatedAt: cartItemCreatedAt.Time,
+				UpdatedAt: cartItemUpdatedAt.Time,
+			}
+			cart.Items = append(cart.Items, cartItem)
 		}
-
-		cart.Items = append(cart.Items, cartItem)
 	}
 
 	return cart, nil
+}
+
+// getCartItemsByCartID retrieves the cart items for a specific cart ID from the database
+func (cs *CartService) getCartItemsByCartID(cartID int) ([]*models.CartItem, error) {
+	query := `
+		SELECT ci.id, ci.product_weight_id, ci.quantity, ci.created_at, ci.updated_at
+		FROM cart_items AS ci
+		WHERE ci.cart_id = ?
+	`
+
+	// Prepare the query
+	stmt, err := cs.Repository.DB.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	// Execute the query
+	rows, err := stmt.Query(cartID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*models.CartItem, 0)
+
+	for rows.Next() {
+		var (
+			itemID          int
+			productWeightID int
+			quantity        int
+			itemCreatedAt   time.Time
+			itemUpdatedAt   time.Time
+		)
+
+		// Scan the row into the variables
+		err := rows.Scan(
+			&itemID, &productWeightID, &quantity, &itemCreatedAt, &itemUpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Create a new cart item and add it to the list
+		item := &models.CartItem{
+			Product:   &models.ProductWeight{ID: productWeightID},
+			Quantity:  quantity,
+			CreatedAt: itemCreatedAt,
+			UpdatedAt: itemUpdatedAt,
+		}
+
+		items = append(items, item)
+	}
+
+	return items, nil
 }
 
 // GetCartResponse represents a response containing the user's cart and total price
