@@ -59,7 +59,9 @@ func main() {
 	productService := services.NewProductService(repo)
 	productWeightService := services.NewProductWeightService(repo)
 	userService := services.NewUserService(repo)
-	cartService := services.NewCartService(repo) // Pass repo.DB here
+	cartService := services.NewCartService(repo)
+	purchaseService := services.NewPurchaseService(repo)
+	paymentService := services.NewPaymentService(repo)
 	// Create more instances of services as needed
 
 	// Create a new Gorilla Mux router
@@ -70,6 +72,8 @@ func main() {
 	userService.RegisterRoutes(router)
 	productWeightService.RegisterRoutes(router)
 	cartService.RegisterRoutes(router)
+	purchaseService.RegisterRoutes(router)
+	paymentService.RegisterRoutes(router)
 	// Register more services' routes as needed
 
 	// Set up Swagger

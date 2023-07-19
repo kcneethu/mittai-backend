@@ -88,30 +88,50 @@ func (r *Repository) createAddressTable() error {
 
 // createCartTable creates the cart table in the database if it doesn't exist or modifies the table structure
 func (r *Repository) createCartTable() error {
-	query := `CREATE TABLE IF NOT EXISTS carts (
+	query := `CREATE TABLE IF NOT EXISTS cart (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER NOT NULL,
-		items TEXT,
+		product_weight_id INTEGER NOT NULL,
+		quantity INTEGER NOT NULL,
 		created_at DATETIME NOT NULL,
 		updated_at DATETIME NOT NULL,
-		FOREIGN KEY (user_id) REFERENCES users (user_id)
+		FOREIGN KEY (user_id) REFERENCES users (id),
+		FOREIGN KEY (product_weight_id) REFERENCES product_weights (id)
 	);`
 
 	_, err := r.Exec(query)
 	return err
 }
 
-// createCartItemTable creates the cart_item table in the database if it doesn't exist or modifies the table structure
-func (r *Repository) createCartItemTable() error {
-	query := `CREATE TABLE IF NOT EXISTS cart_items (
+// createCartTable creates the cart table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createPaymentModeTable() error {
+	query := `CREATE TABLE payment_mode (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		cart_id INTEGER NOT NULL,
-		product_weight_id INTEGER NOT NULL,
-		quantity INTEGER NOT NULL,
-		created_at DATETIME NULL,
-		updated_at DATETIME NULL,
-		FOREIGN KEY (cart_id) REFERENCES carts (id),
-		FOREIGN KEY (product_weight_id) REFERENCES product_weights (id)
+		mode TEXT,
+		is_active BOOLEAN
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// createCartTable creates the cart table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createPurchasesTable() error {
+	query := `CREATE TABLE purchases (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		product_id INTEGER,
+		product_price REAL,
+		quantity INTEGER,
+		total_price REAL,
+		address_id INTEGER,
+		payment_id INTEGER,
+		created_at DATETIME,
+		updated_at DATETIME,
+		FOREIGN KEY (user_id) REFERENCES users (id),
+		FOREIGN KEY (product_id) REFERENCES products (id),
+		FOREIGN KEY (address_id) REFERENCES addresses (id),
+		FOREIGN KEY (payment_id) REFERENCES payment_mode (id)
 	);`
 
 	_, err := r.Exec(query)
@@ -132,7 +152,10 @@ func (r *Repository) CreateTables() {
 	if err := r.createCartTable(); err != nil {
 		log.Fatal(err)
 	}
-	if err := r.createCartItemTable(); err != nil {
+	if err := r.createPaymentModeTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createPurchasesTable(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -16,6 +16,182 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/cart": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Update the quantity of a cart item",
+                "parameters": [
+                    {
+                        "description": "Update cart item request payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.UpdateCartItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart item updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update cart item",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Add a product to the cart",
+                "parameters": [
+                    {
+                        "description": "Add to cart request payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.AddToCartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product added to cart successfully",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add product to cart",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Remove a cart item",
+                "parameters": [
+                    {
+                        "description": "Remove cart item request payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.RemoveCartItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart item removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to remove cart item",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cart/clear": {
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Clear the cart",
+                "parameters": [
+                    {
+                        "description": "Clear cart request payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.ClearCartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart cleared successfully",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to clear cart",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cart/{userID}": {
             "get": {
                 "consumes": [
@@ -49,205 +225,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/services.ErrorResponse"
                         }
-                    }
-                }
-            }
-        },
-        "/cart/{userID}/clear": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Clear the cart for a specific user",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Cart cleared successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Cart not found",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
                     },
                     "500": {
-                        "description": "Failed to clear cart",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cart/{userID}/{productWeightID}": {
-            "put": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Update the quantity of a cart item",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product Weight ID",
-                        "name": "productWeightID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Quantity",
-                        "name": "quantity",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Cart item updated successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID or product weight ID or quantity",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Cart item not found",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Add an item to the cart",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product Weight ID",
-                        "name": "productWeightID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Item added to cart successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID or product weight ID",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Cart not found or Product weight not found",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Remove a cart item from the cart",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product Weight ID",
-                        "name": "productWeightID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Cart item removed successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID or product weight ID",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Cart not found or Cart item not found",
+                        "description": "Failed to fetch cart",
                         "schema": {
                             "$ref": "#/definitions/services.ErrorResponse"
                         }
@@ -541,6 +521,94 @@ const docTemplate = `{
                 }
             }
         },
+        "/purchase": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Purchase"
+                ],
+                "summary": "Create a purchase",
+                "parameters": [
+                    {
+                        "description": "Purchase request payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.PurchaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Purchase created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.PurchaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create purchase",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/purchase/{userID}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Purchase"
+                ],
+                "summary": "Get purchases by user ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Purchases retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Purchase"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to fetch purchases",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "post": {
                 "consumes": [
@@ -736,33 +804,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Cart": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.CartItem"
-                    }
-                },
-                "total_price": {
-                    "description": "add this line",
-                    "type": "number"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.CartItem": {
             "type": "object",
             "properties": {
@@ -840,6 +881,86 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Purchase": {
+            "type": "object",
+            "properties": {
+                "address_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PurchaseItem"
+                    }
+                },
+                "payment_id": {
+                    "type": "integer"
+                },
+                "total_price": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.PurchaseItem": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "product_price": {
+                    "type": "number"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "total_price": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.PurchaseRequest": {
+            "type": "object",
+            "properties": {
+                "address_id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PurchaseItem"
+                    }
+                },
+                "payment_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.PurchaseResponse": {
+            "type": "object",
+            "properties": {
+                "purchase_id": {
                     "type": "integer"
                 }
             }
@@ -924,6 +1045,28 @@ const docTemplate = `{
                 }
             }
         },
+        "services.AddToCartRequest": {
+            "type": "object",
+            "properties": {
+                "product_weight_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.ClearCartRequest": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "services.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -935,11 +1078,25 @@ const docTemplate = `{
         "services.GetCartResponse": {
             "type": "object",
             "properties": {
-                "cart": {
-                    "$ref": "#/definitions/models.Cart"
+                "cart_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CartItem"
+                    }
                 },
-                "totalPrice": {
+                "total_price": {
                     "type": "number"
+                }
+            }
+        },
+        "services.RemoveCartItemRequest": {
+            "type": "object",
+            "properties": {
+                "product_weight_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -950,6 +1107,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "product_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.UpdateCartItemRequest": {
+            "type": "object",
+            "properties": {
+                "product_weight_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "user_id": {
                     "type": "integer"
                 }
             }

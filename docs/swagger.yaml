@@ -16,24 +16,6 @@ definitions:
       zipCode:
         type: string
     type: object
-  models.Cart:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/models.CartItem'
-        type: array
-      total_price:
-        description: add this line
-        type: number
-      updated_at:
-        type: string
-      user_id:
-        type: integer
-    type: object
   models.CartItem:
     properties:
       created_at:
@@ -85,6 +67,58 @@ definitions:
       stockAvailability:
         type: integer
       weight:
+        type: integer
+    type: object
+  models.Purchase:
+    properties:
+      address_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/models.PurchaseItem'
+        type: array
+      payment_id:
+        type: integer
+      total_price:
+        type: number
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.PurchaseItem:
+    properties:
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      product_price:
+        type: number
+      quantity:
+        type: integer
+      total_price:
+        type: number
+    type: object
+  models.PurchaseRequest:
+    properties:
+      address_id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/models.PurchaseItem'
+        type: array
+      payment_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.PurchaseResponse:
+    properties:
+      purchase_id:
         type: integer
     type: object
   models.User:
@@ -139,6 +173,20 @@ definitions:
       weight:
         type: integer
     type: object
+  services.AddToCartRequest:
+    properties:
+      product_weight_id:
+        type: integer
+      quantity:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  services.ClearCartRequest:
+    properties:
+      user_id:
+        type: integer
+    type: object
   services.ErrorResponse:
     properties:
       message:
@@ -146,16 +194,34 @@ definitions:
     type: object
   services.GetCartResponse:
     properties:
-      cart:
-        $ref: '#/definitions/models.Cart'
-      totalPrice:
+      cart_items:
+        items:
+          $ref: '#/definitions/models.CartItem'
+        type: array
+      total_price:
         type: number
+    type: object
+  services.RemoveCartItemRequest:
+    properties:
+      product_weight_id:
+        type: integer
+      user_id:
+        type: integer
     type: object
   services.SuccessResponse:
     properties:
       message:
         type: string
       product_id:
+        type: integer
+    type: object
+  services.UpdateCartItemRequest:
+    properties:
+      product_weight_id:
+        type: integer
+      quantity:
+        type: integer
+      user_id:
         type: integer
     type: object
   services.UpdateProductWeightRequest:
@@ -170,6 +236,91 @@ definitions:
 info:
   contact: {}
 paths:
+  /cart:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Remove cart item request payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/services.RemoveCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cart item removed successfully
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to remove cart item
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Remove a cart item
+      tags:
+      - Cart
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Add to cart request payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/services.AddToCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product added to cart successfully
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to add product to cart
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Add a product to the cart
+      tags:
+      - Cart
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Update cart item request payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/services.UpdateCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cart item updated successfully
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to update cart item
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Update the quantity of a cart item
+      tags:
+      - Cart
   /cart/{userID}:
     get:
       consumes:
@@ -191,141 +342,40 @@ paths:
           description: Invalid user ID
           schema:
             $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to fetch cart
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
       summary: Get the user's cart by user ID
       tags:
       - Cart
-  /cart/{userID}/{productWeightID}:
+  /cart/clear:
     delete:
       consumes:
       - application/json
       parameters:
-      - description: User ID
-        in: path
-        name: userID
+      - description: Clear cart request payload
+        in: body
+        name: request
         required: true
-        type: string
-      - description: Product Weight ID
-        in: path
-        name: productWeightID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Cart item removed successfully
-          schema:
-            type: string
-        "400":
-          description: Invalid user ID or product weight ID
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-        "404":
-          description: Cart not found or Cart item not found
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-      summary: Remove a cart item from the cart
-      tags:
-      - Cart
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: User ID
-        in: path
-        name: userID
-        required: true
-        type: string
-      - description: Product Weight ID
-        in: path
-        name: productWeightID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Item added to cart successfully
-          schema:
-            type: string
-        "400":
-          description: Invalid user ID or product weight ID
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-        "404":
-          description: Cart not found or Product weight not found
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-      summary: Add an item to the cart
-      tags:
-      - Cart
-    put:
-      consumes:
-      - application/json
-      parameters:
-      - description: User ID
-        in: path
-        name: userID
-        required: true
-        type: string
-      - description: Product Weight ID
-        in: path
-        name: productWeightID
-        required: true
-        type: string
-      - description: Quantity
-        in: query
-        name: quantity
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Cart item updated successfully
-          schema:
-            type: string
-        "400":
-          description: Invalid user ID or product weight ID or quantity
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-        "404":
-          description: Cart item not found
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-      summary: Update the quantity of a cart item
-      tags:
-      - Cart
-  /cart/{userID}/clear:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: User ID
-        in: path
-        name: userID
-        required: true
-        type: integer
+        schema:
+          $ref: '#/definitions/services.ClearCartRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Cart cleared successfully
           schema:
-            type: string
-        "400":
-          description: Invalid user ID
-          schema:
             $ref: '#/definitions/services.ErrorResponse'
-        "404":
-          description: Cart not found
+        "400":
+          description: Invalid request payload
           schema:
             $ref: '#/definitions/services.ErrorResponse'
         "500":
           description: Failed to clear cart
           schema:
             $ref: '#/definitions/services.ErrorResponse'
-      summary: Clear the cart for a specific user
+      summary: Clear the cart
       tags:
       - Cart
   /products:
@@ -517,6 +567,63 @@ paths:
       summary: Update an existing weight variant for a product
       tags:
       - Product Weights
+  /purchase:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Purchase request payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.PurchaseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Purchase created successfully
+          schema:
+            $ref: '#/definitions/models.PurchaseResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to create purchase
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Create a purchase
+      tags:
+      - Purchase
+  /purchase/{userID}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Purchases retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/models.Purchase'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to fetch purchases
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Get purchases by user ID
+      tags:
+      - Purchase
   /users:
     post:
       consumes:
