@@ -315,6 +315,10 @@ func (ps *ProductService) GetProductDetails(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(product)
 }
 
+func (ps *ProductService) GetProductByID(productID string) (*models.Product, error) {
+	return ps.getProductByID(productID)
+}
+
 // getProductByID retrieves a product from the database by its ID
 func (ps *ProductService) getProductByID(productID string) (*models.Product, error) {
 	query := `SELECT id, name, description, category, ingredients, nutritional_info, image_urls, created_at, updated_at FROM products WHERE id = ?`

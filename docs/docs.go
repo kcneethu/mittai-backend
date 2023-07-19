@@ -557,6 +557,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/services.ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "Product not found",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Insufficient stock",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Failed to create purchase",
                         "schema": {
@@ -906,6 +918,9 @@ const docTemplate = `{
                 "payment_id": {
                     "type": "integer"
                 },
+                "product_weight_id": {
+                    "type": "integer"
+                },
                 "total_price": {
                     "type": "number"
                 },
@@ -928,6 +943,9 @@ const docTemplate = `{
                 },
                 "product_price": {
                     "type": "number"
+                },
+                "product_weight_id": {
+                    "type": "integer"
                 },
                 "quantity": {
                     "type": "integer"

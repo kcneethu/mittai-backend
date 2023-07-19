@@ -103,9 +103,9 @@ func (r *Repository) createCartTable() error {
 	return err
 }
 
-// createCartTable creates the cart table in the database if it doesn't exist or modifies the table structure
+// createPaymentModeTable creates the cart table in the database if it doesn't exist or modifies the table structure
 func (r *Repository) createPaymentModeTable() error {
-	query := `CREATE TABLE payment_mode (
+	query := `CREATE TABLE IF NOT EXISTS payment_mode (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		mode TEXT,
 		is_active BOOLEAN
@@ -115,9 +115,9 @@ func (r *Repository) createPaymentModeTable() error {
 	return err
 }
 
-// createCartTable creates the cart table in the database if it doesn't exist or modifies the table structure
+// createPurchasesTable creates the cart table in the database if it doesn't exist or modifies the table structure
 func (r *Repository) createPurchasesTable() error {
-	query := `CREATE TABLE purchases (
+	query := `CREATE TABLE IF NOT EXISTS purchases (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER,
 		product_id INTEGER,
@@ -133,6 +133,27 @@ func (r *Repository) createPurchasesTable() error {
 		FOREIGN KEY (address_id) REFERENCES addresses (id),
 		FOREIGN KEY (payment_id) REFERENCES payment_mode (id)
 	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// createPurchasesItemTable creates the cart table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createPurchasesItemTable() error {
+	query := `CREATE TABLE IF NOT EXISTS purchase_items (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		purchase_id INTEGER,
+		product_id INTEGER,
+		product_name TEXT,
+		product_price REAL,
+		quantity INTEGER,
+		total_price REAL,
+		product_weight_id INTEGER,
+		FOREIGN KEY (purchase_id) REFERENCES purchases (id),
+		FOREIGN KEY (product_id) REFERENCES products (id),
+		FOREIGN KEY (product_weight_id) REFERENCES product_weights (id)
+	);
+	`
 
 	_, err := r.Exec(query)
 	return err
@@ -158,4 +179,8 @@ func (r *Repository) CreateTables() {
 	if err := r.createPurchasesTable(); err != nil {
 		log.Fatal(err)
 	}
+	if err := r.createPurchasesItemTable(); err != nil {
+		log.Fatal(err)
+	}
+
 }
