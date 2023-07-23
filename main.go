@@ -11,6 +11,7 @@ import (
 	"github.com/gklps/mittai-backend/services"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -75,6 +76,10 @@ func main() {
 	purchaseService.RegisterRoutes(router)
 	paymentService.RegisterRoutes(router)
 	// Register more services' routes as needed
+
+	// Add CORS support using the cors package
+	corsHandler := cors.Default()
+	router.Use(corsHandler.Handler) // Add the corsHandler to the router's middleware
 
 	// Set up Swagger
 	swaggerURL := "/docs/swagger.json"

@@ -597,3 +597,32 @@ func (ps *ProductService) getProductWeightByID(productID string, weightID string
 
 	return weight, nil
 }
+
+// GetProductPriceByID retrieves the price of a product variant based on its weight ID
+func (ps *ProductService) GetProductPriceByID(weightID int) float64 {
+	query := `SELECT price FROM product_weights WHERE id = ?`
+	row := ps.DB.QueryRow(query, weightID)
+
+	var price float64
+	err := row.Scan(&price)
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
+
+	return price
+}
+
+// GetProductNameByID retrieves the name of a product based on its ID
+func (ps *ProductService) GetProductNameByID(productID int) (string, error) {
+	query := `SELECT name FROM products WHERE id = ?`
+	row := ps.DB.QueryRow(query, productID)
+
+	var name string
+	err := row.Scan(&name)
+	if err != nil {
+		return "", err
+	}
+
+	return name, nil
+}

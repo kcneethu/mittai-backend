@@ -4,15 +4,14 @@ import "time"
 
 // Purchase represents a purchase made by a user
 type Purchase struct {
-	ID              int             `json:"id"`
-	UserID          int             `json:"user_id"`
-	ProductWeightID int             `json:"product_weight_id"`
-	AddressID       int             `json:"address_id"`
-	PaymentID       int             `json:"payment_id"`
-	TotalPrice      float64         `json:"total_price"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
-	Items           []*PurchaseItem `json:"items"`
+	ID         int             `json:"id"`
+	UserID     int             `json:"user_id"`
+	AddressID  int             `json:"address_id"`
+	PaymentID  int             `json:"payment_id"`
+	TotalPrice float64         `json:"total_price"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+	Items      []*PurchaseItem `json:"items"`
 }
 
 // PurchaseItem represents a purchased item
@@ -27,10 +26,12 @@ type PurchaseItem struct {
 
 // PurchaseRequest represents the request payload for creating a purchase
 type PurchaseRequest struct {
-	UserID    int            `json:"user_id"`
-	AddressID int            `json:"address_id"`
-	PaymentID int            `json:"payment_id"`
-	Items     []PurchaseItem `json:"items"`
+	UserID          int `json:"user_id"`
+	AddressID       int `json:"address_id"`
+	PaymentID       int `json:"payment_id"`
+	ProductID       int `json:"product_id"`
+	ProductWeightID int `json:"product_weight_id"`
+	Quantity        int `json:"quantity"`
 }
 
 // PurchaseResponse represents the response payload for a created purchase

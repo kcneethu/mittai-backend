@@ -83,8 +83,6 @@ definitions:
         type: array
       payment_id:
         type: integer
-      product_weight_id:
-        type: integer
       total_price:
         type: number
       updated_at:
@@ -111,11 +109,13 @@ definitions:
     properties:
       address_id:
         type: integer
-      items:
-        items:
-          $ref: '#/definitions/models.PurchaseItem'
-        type: array
       payment_id:
+        type: integer
+      product_id:
+        type: integer
+      product_weight_id:
+        type: integer
+      quantity:
         type: integer
       user_id:
         type: integer

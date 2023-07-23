@@ -918,9 +918,6 @@ const docTemplate = `{
                 "payment_id": {
                     "type": "integer"
                 },
-                "product_weight_id": {
-                    "type": "integer"
-                },
                 "total_price": {
                     "type": "number"
                 },
@@ -961,13 +958,16 @@ const docTemplate = `{
                 "address_id": {
                     "type": "integer"
                 },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.PurchaseItem"
-                    }
-                },
                 "payment_id": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "product_weight_id": {
+                    "type": "integer"
+                },
+                "quantity": {
                     "type": "integer"
                 },
                 "user_id": {
