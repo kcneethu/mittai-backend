@@ -26,14 +26,14 @@ func NewProductWeightService(db *db.Repository) *ProductWeightService {
 type AddProductWeightRequest struct {
 	Weight            int     `json:"weight" form:"weight"`
 	Price             float64 `json:"price" form:"price"`
-	StockAvailability int     `json:"stock_availability" form:"stock_availability"`
+	StockAvailability int     `json:"stock" form:"stock"`
 }
 
 // UpdateProductWeightRequest represents the request body for updating an existing weight variant
 type UpdateProductWeightRequest struct {
 	Weight            int     `json:"weight" form:"weight"`
 	Price             float64 `json:"price" form:"price"`
-	StockAvailability int     `json:"stock_availability" form:"stock_availability"`
+	StockAvailability int     `json:"stock" form:"stock"`
 }
 
 // AddProductWeight adds a new weight variant for a product
@@ -140,7 +140,7 @@ func (ps *ProductWeightService) UpdateProductWeight(w http.ResponseWriter, r *ht
 
 // saveProductWeight saves a weight variant for a product to the database
 func (ps *ProductWeightService) saveProductWeight(weight *models.ProductWeight) error {
-	query := `INSERT INTO product_weights (product_id, weight, price, stock_availability, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
 	_, err := ps.DB.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt)
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (ps *ProductWeightService) saveProductWeight(weight *models.ProductWeight) 
 
 // updateProductWeight updates an existing weight variant for a product in the database
 func (ps *ProductWeightService) updateProductWeight(productID string, weightID string, weight UpdateProductWeightRequest) error {
-	query := `UPDATE product_weights SET weight = ?, price = ?, stock_availability = ?, updated_at = ? WHERE product_id = ? AND id = ?`
+	query := `UPDATE product_weights SET weight = ?, price = ?, stock = ?, updated_at = ? WHERE product_id = ? AND id = ?`
 	_, err := ps.DB.Exec(query, weight.Weight, weight.Price, weight.StockAvailability, time.Now(), productID, weightID)
 	if err != nil {
 		return err
