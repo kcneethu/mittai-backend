@@ -130,7 +130,7 @@ func (cs *CartService) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := cs.DB.Query(`SELECT c.id, c.quantity,
 			p.id, p.name, p.description, p.category, p.ingredients, p.nutritional_info, p.image_urls,
-			w.id, w.weight, w.price, w.stock_availability, w.created_at, w.updated_at
+			w.id, w.weight, w.price, w.stock, w.created_at, w.updated_at
 		FROM cart AS c
 		INNER JOIN product_weights AS w ON c.product_weight_id = w.id
 		INNER JOIN products AS p ON w.product_id = p.id

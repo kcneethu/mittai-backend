@@ -40,7 +40,7 @@ func (r *Repository) createProductTable() error {
 		product_id INTEGER NOT NULL,
 		weight FLOAT NOT NULL,
 		price FLOAT NOT NULL,
-		stock_availability INTEGER NOT NULL, -- Modified field name
+		stock INTEGER NOT NULL, -- Modified field name
 		created_at DATETIME NOT NULL,
 		updated_at DATETIME NOT NULL,
 		FOREIGN KEY (product_id) REFERENCES products (id)

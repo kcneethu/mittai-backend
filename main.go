@@ -95,6 +95,6 @@ func main() {
 	log.Println("Database Path:", dbPath)
 
 	// Start the HTTP server
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
 
 }

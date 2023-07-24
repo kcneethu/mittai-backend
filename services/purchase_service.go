@@ -120,7 +120,7 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 
 	// Reduce the stock quantity
 	updatedStock := weight.StockAvailability - request.Quantity
-	_, err = tx.Exec("UPDATE product_weights SET stock_availability = ? WHERE id = ?", updatedStock, request.ProductWeightID)
+	_, err = tx.Exec("UPDATE product_weights SET stock = ? WHERE id = ?", updatedStock, request.ProductWeightID)
 	if err != nil {
 		log.Println(err)
 		tx.Rollback()
