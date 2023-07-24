@@ -172,7 +172,7 @@ definitions:
     properties:
       price:
         type: number
-      stock_availability:
+      stock:
         type: integer
       weight:
         type: integer
@@ -232,7 +232,7 @@ definitions:
     properties:
       price:
         type: number
-      stock_availability:
+      stock:
         type: integer
       weight:
         type: integer

@@ -1055,7 +1055,7 @@ const docTemplate = `{
                 "price": {
                     "type": "number"
                 },
-                "stock_availability": {
+                "stock": {
                     "type": "integer"
                 },
                 "weight": {
@@ -1149,7 +1149,7 @@ const docTemplate = `{
                 "price": {
                     "type": "number"
                 },
-                "stock_availability": {
+                "stock": {
                     "type": "integer"
                 },
                 "weight": {
