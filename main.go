@@ -65,7 +65,6 @@ func main() {
 	paymentService := services.NewPaymentService(repo)
 	// Create more instances of services as needed
 
-	// Create a new Gorilla Mux router
 	router := mux.NewRouter()
 
 	// Register the routes for each service
@@ -78,8 +77,13 @@ func main() {
 	// Register more services' routes as needed
 
 	// Add CORS support using the cors package
-	corsHandler := cors.Default()
-	router.Use(corsHandler.Handler) // Add the corsHandler to the router's middleware
+	allowedOrigins := []string{"http://localhost:3000"}
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   allowedOrigins,
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	})
+	// Add the corsHandler to the router's middleware
 
 	// Set up Swagger
 	swaggerURL := "/docs/swagger.json"
@@ -95,6 +99,6 @@ func main() {
 	log.Println("Database Path:", dbPath)
 
 	// Start the HTTP server
-	log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
+	log.Fatal(http.ListenAndServe("0.0.0.0:8080", corsHandler.Handler(router)))
 
 }
