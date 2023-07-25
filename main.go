@@ -103,7 +103,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		// Set other CORS headers to handle preflight requests
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, content-type")
 
 		// Allow preflight requests (OPTIONS method) by setting appropriate headers for preflight responses
 		if r.Method == http.MethodOptions {
