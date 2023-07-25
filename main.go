@@ -9,6 +9,7 @@ import (
 
 	"github.com/gklps/mittai-backend/db"
 	"github.com/gklps/mittai-backend/services"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -65,6 +66,11 @@ func main() {
 	// Create more instances of services as needed
 
 	router := mux.NewRouter()
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)
 
 	// Register the routes for each service
 	productService.RegisterRoutes(router)
@@ -73,9 +79,8 @@ func main() {
 	cartService.RegisterRoutes(router)
 	purchaseService.RegisterRoutes(router)
 	paymentService.RegisterRoutes(router)
+	http.Handle("/", corsHandler(router))
 	// Register more services' routes as needed
-
-	router.Use(corsMiddleware)
 
 	// Set up Swagger
 	swaggerURL := "/docs/swagger.json"
@@ -93,26 +98,4 @@ func main() {
 	// Start the HTTP server
 	log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
 
-}
-
-// corsMiddleware is a middleware function to set the CORS headers in the response.
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set the Access-Control-Allow-Origin header to allow requests from http://localhost:3000
-		origin := r.Header.Get("Origin")
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-
-		// Optionally, you can set other CORS headers, such as Access-Control-Allow-Methods, etc.
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		// Allow preflight requests (OPTIONS method) by setting appropriate headers for preflight responses
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		// Call the next handler in the chain
-		next.ServeHTTP(w, r)
-	})
 }
