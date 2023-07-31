@@ -87,10 +87,13 @@ func main() {
 	router.Use(LoggingMiddleware)
 
 	// Set up Swagger
-	swaggerURL := "/docs/swagger.json"
+	swaggerURL := "http://swagger.mittaitheruvu.com/swagger/index.html"
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 		httpSwagger.URL(swaggerURL), // The url pointing to API definition
 	))
+	// router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+	// 	httpSwagger.URL(swaggerURL), // The url pointing to API definition
+	// ))
 
 	router.PathPrefix("/docs/").Handler(http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 
