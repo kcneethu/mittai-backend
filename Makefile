@@ -1,6 +1,7 @@
 compile-linux:
 	echo "Compiling for Linux OS"
 	go env -w GOOS=linux
+	go env CC=gcc
 	go env -w CGO_ENABLED=1
 	go build -o linux/mittai
 compile-windows:

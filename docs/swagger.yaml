@@ -238,7 +238,8 @@ definitions:
         type: integer
     type: object
 info:
-  contact: {}
+  version: 1.0.0
+  title: Simple API
 paths:
   /cart:
     delete:
