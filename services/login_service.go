@@ -34,6 +34,7 @@ type LoginResponse struct {
 // @Router /login [post]
 // Login logs in a user and returns the user_id if the password is correct
 // Login logs in a user and returns the user_id if the password is correct
+// Login logs in a user and returns the user_id if the password is correct
 func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 	var loginReq LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&loginReq)
@@ -55,8 +56,8 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("Stored Hashed Password:", user.Password)
 	log.Println("Input Password:", loginReq.Password)
 
-	// Compare the provided password with the hashed password stored in the database
-	err = us.comparePasswords(user.Password, loginReq.Password)
+	// Compare the stored hashed password with the provided plain text password
+	err = us.comparePasswords(loginReq.Password, user.Password)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
