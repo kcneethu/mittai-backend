@@ -36,6 +36,8 @@ type LoginResponse struct {
 // Login logs in a user and returns the user_id if the password is correct
 // Login logs in a user and returns the user_id if the password is correct
 // Login logs in a user and returns the user_id if the password is correct
+// Login logs in a user and returns the user_id if the password is correct
+// Login logs in a user and returns the user_id if the password is correct
 func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 	var loginReq LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&loginReq)
@@ -53,14 +55,13 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Log the stored hashed password and input password for debugging
-	log.Println("Stored Hashed Password:", user.Password)
+	// Log the stored password and input password for debugging
+	log.Println("Stored Password:", user.Password)
 	log.Println("Input Password:", loginReq.Password)
 
-	// Compare the provided plain text password with the stored hashed password
-	err = us.comparePasswords(loginReq.Password, user.Password)
-	if err != nil {
-		log.Println(err)
+	// Compare the provided plain text password with the stored password
+	if user.Password != loginReq.Password {
+		log.Println("Invalid password")
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}

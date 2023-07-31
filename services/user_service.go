@@ -52,16 +52,6 @@ func (us *UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash the user's password before saving to the database
-	hashedPassword, err := us.hashPassword(user.Password)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
-		return
-	}
-
-	user.Password = hashedPassword
-
 	// Check if the contact number is unique
 	if us.isContactNumberExists(user.ContactNumber) {
 		http.Error(w, "Contact number already exists", http.StatusConflict)
