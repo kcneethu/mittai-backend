@@ -58,6 +58,10 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Log the hashed passwords for debugging
+	log.Println("Stored Hashed Password:", user.Password)
+	log.Println("Input Hashed Password:", hashedPassword)
+
 	// Compare the hashed password with the hashed password stored in the database
 	if user.Password != hashedPassword {
 		log.Println("Invalid password")
