@@ -193,6 +193,11 @@ definitions:
       user_id:
         type: integer
     type: object
+  services.CreateAddressResponse:
+    properties:
+      address_id:
+        type: integer
+    type: object
   services.ErrorResponse:
     properties:
       message:
@@ -254,6 +259,111 @@ definitions:
 info:
   contact: {}
 paths:
+  /addresses:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Address object
+        in: body
+        name: address
+        required: true
+        schema:
+          $ref: '#/definitions/models.Address'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Address created successfully
+          schema:
+            $ref: '#/definitions/services.CreateAddressResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to create address
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Create a new address
+      tags:
+      - Addresses
+  /addresses/{id}:
+    delete:
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Address deleted successfully
+          schema:
+            type: string
+        "500":
+          description: Failed to delete address
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Delete an address
+      tags:
+      - Addresses
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Address retrieved successfully
+          schema:
+            $ref: '#/definitions/models.Address'
+        "500":
+          description: Failed to retrieve address
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Retrieve an address by ID
+      tags:
+      - Addresses
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Address object
+        in: body
+        name: address
+        required: true
+        schema:
+          $ref: '#/definitions/models.Address'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Address updated successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to update address
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Update an address
+      tags:
+      - Addresses
   /cart:
     delete:
       consumes:
@@ -788,4 +898,34 @@ paths:
       summary: Update a user
       tags:
       - Users
+  /users/{user_id}/addresses:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Addresses retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/models.Address'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to get addresses
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Fetch all addresses for a given user ID
+      tags:
+      - Addresses
 swagger: "2.0"

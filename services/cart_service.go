@@ -63,6 +63,12 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 		request.Quantity = 1
 	}
 
+	//check if request.userid is valid if not return error
+	if request.UserID <= 0 {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
 	tx, err := cs.DB.Begin()
 	if err != nil {
 		log.Println(err)

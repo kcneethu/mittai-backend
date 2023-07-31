@@ -63,6 +63,7 @@ func main() {
 	cartService := services.NewCartService(repo)
 	purchaseService := services.NewPurchaseService(repo, productService)
 	paymentService := services.NewPaymentService(repo)
+	addressService := services.NewAddressService(repo)
 	// Create more instances of services as needed
 
 	router := mux.NewRouter()
@@ -79,6 +80,7 @@ func main() {
 	cartService.RegisterRoutes(router)
 	purchaseService.RegisterRoutes(router)
 	paymentService.RegisterRoutes(router)
+	addressService.RegisterRoutes(router)
 	http.Handle("/", corsHandler(router))
 	handler := corsMiddleware(router)
 	// Register more services' routes as needed
