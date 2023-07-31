@@ -62,7 +62,8 @@ func (r *Repository) createUserTable() error {
 		last_name TEXT NOT NULL,
 		email TEXT NOT NULL,
 		contact_number TEXT NOT NULL UNIQUE,
-		verified_account BOOLEAN NOT NULL DEFAULT 0
+		verified_account BOOLEAN NOT NULL DEFAULT 0,
+		hashed_password VARCHAR(100) NOT NULL
 	);`
 
 	_, err := r.Exec(query)

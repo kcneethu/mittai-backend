@@ -139,6 +139,8 @@ definitions:
         type: string
       lastName:
         type: string
+      password:
+        type: string
       userID:
         type: integer
       verifiedAccount:
@@ -205,6 +207,18 @@ definitions:
       total_price:
         type: number
     type: object
+  services.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  services.LoginResponse:
+    properties:
+      user_id:
+        type: integer
+    type: object
   services.RemoveCartItemRequest:
     properties:
       product_weight_id:
@@ -238,8 +252,7 @@ definitions:
         type: integer
     type: object
 info:
-  version: 1.0.0
-  title: Simple API
+  contact: {}
 paths:
   /cart:
     delete:
@@ -383,6 +396,35 @@ paths:
       summary: Clear the cart
       tags:
       - Cart
+  /login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login request object
+        in: body
+        name: loginReq
+        required: true
+        schema:
+          $ref: '#/definitions/services.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/services.LoginResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "401":
+          description: Invalid email or password
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: User login
+      tags:
+      - Users
   /products:
     get:
       produces:

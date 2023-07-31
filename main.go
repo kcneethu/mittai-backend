@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/gklps/mittai-backend/db"
 	"github.com/gklps/mittai-backend/services"
@@ -84,10 +83,10 @@ func main() {
 	handler := corsMiddleware(router)
 	// Register more services' routes as needed
 
-	router.Use(LoggingMiddleware)
+	//router.Use(LoggingMiddleware)
 
 	// Set up Swagger
-	swaggerURL := "http://swagger.mittaitheruvu.com/swagger/index.html"
+	swaggerURL := "/swagger/index.html"
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 		httpSwagger.URL(swaggerURL), // The url pointing to API definition
 	))
@@ -128,25 +127,5 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		// Call the next handler in the chain
 		next.ServeHTTP(w, r)
-	})
-}
-
-// LoggingMiddleware logs details of each API call
-func LoggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
-
-		// Proceed with the next handler
-		next.ServeHTTP(w, r)
-
-		// Log details of the API call
-		log.Printf(
-			"[%s] %s %s %s %s",
-			r.Method,
-			r.RequestURI,
-			r.RemoteAddr,
-			r.UserAgent(),
-			time.Since(startTime),
-		)
 	})
 }

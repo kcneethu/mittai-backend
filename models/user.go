@@ -9,6 +9,7 @@ type User struct {
 	ContactNumber   string      `json:"contactNumber"`
 	Address         *[]*Address `json:"address"`
 	VerifiedAccount bool        `json:"verifiedAccount"`
+	Password        string      `json:"password"`
 	// isactive  		bool        `json:"isactive"`
 }
 

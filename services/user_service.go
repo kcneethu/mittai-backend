@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"github.com/gklps/mittai-backend/db"
 	"github.com/gklps/mittai-backend/models"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserService represents a service for user-related operations
@@ -27,6 +29,7 @@ func (us *UserService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/users/{id}", us.GetUserByID).Methods("GET")
 	r.HandleFunc("/users/{id}", us.UpdateUser).Methods("PUT")
 	r.HandleFunc("/users/{id}", us.DeleteUser).Methods("DELETE")
+	r.HandleFunc("/login", us.Login).Methods("POST") // Add this line for the login route
 }
 
 // CreateUser creates a new user
@@ -49,14 +52,30 @@ func (us *UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Hash the user's password before saving to the database
+	hashedPassword, err := us.hashPassword(user.Password)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
+
+	log.Println(hashedPassword, "hp ")
+	log.Printf("%+v", user.Password)
+	user.Password = hashedPassword
 	// Check if the contact number is unique
 	if us.isContactNumberExists(user.ContactNumber) {
 		http.Error(w, "Contact number already exists", http.StatusConflict)
 		return
 	}
 
+	log.Printf("%+v", user)
+
 	// Save the user to the database
 	err = us.saveUser(&user)
+
+	//print the user
+
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
@@ -70,8 +89,8 @@ func (us *UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (us *UserService) saveUser(user *models.User) error {
 	// Save the user to the 'users' table
-	query := `INSERT INTO users (first_name, last_name, email, contact_number, verified_account) VALUES (?, ?, ?, ?, ?)`
-	result, err := us.DB.Exec(query, user.FirstName, user.LastName, user.Email, user.ContactNumber, user.VerifiedAccount)
+	query := `INSERT INTO users (first_name, last_name, email, contact_number, verified_account, hashed_password) VALUES (?, ?, ?, ?, ?, ?)`
+	result, err := us.DB.Exec(query, user.FirstName, user.LastName, user.Email, user.ContactNumber, user.VerifiedAccount, user.Password)
 	if err != nil {
 		return err
 	}
@@ -129,7 +148,7 @@ func (us *UserService) getUserByID(userID string) (*models.User, error) {
 	row := us.DB.QueryRow(query, userID)
 
 	user := &models.User{}
-	err := row.Scan(&user.UserID, &user.FirstName, &user.LastName, &user.Email, &user.ContactNumber, &user.VerifiedAccount)
+	err := row.Scan(&user.UserID, &user.FirstName, &user.LastName, &user.Email, &user.ContactNumber, &user.VerifiedAccount, &user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -280,4 +299,17 @@ func (us *UserService) isContactNumberExists(contactNumber string) bool {
 	}
 
 	return count > 0
+}
+
+// hashPassword hashes the user's password using bcrypt
+func (us *UserService) hashPassword(password string) (string, error) {
+	// Hash the password using bcrypt
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	// Base64 encode the hashed password before returning it as a string
+	hashedPassword := base64.StdEncoding.EncodeToString(hashedBytes)
+	return hashedPassword, nil
 }
