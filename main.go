@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gklps/mittai-backend/db"
 	"github.com/gklps/mittai-backend/services"
@@ -80,8 +81,10 @@ func main() {
 	purchaseService.RegisterRoutes(router)
 	paymentService.RegisterRoutes(router)
 	http.Handle("/", corsHandler(router))
-	router.Use(corsMiddleware)
+	handler := corsMiddleware(router)
 	// Register more services' routes as needed
+
+	router.Use(LoggingMiddleware)
 
 	// Set up Swagger
 	swaggerURL := "/docs/swagger.json"
@@ -97,7 +100,7 @@ func main() {
 	log.Println("Database Path:", dbPath)
 
 	// Start the HTTP server
-	log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
+	log.Fatal(http.ListenAndServe("0.0.0.0:8080", handler))
 
 }
 
@@ -105,20 +108,42 @@ func main() {
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set the Access-Control-Allow-Origin header to allow requests from http://localhost:3000
-		origin := r.Header.Get("Origin")
-		w.Header().Set("Access-Control-Allow-Origin", origin)
+		for key, values := range r.Header {
+			log.Printf("%s: %v\n", key, values)
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		// Optionally, you can set other CORS headers, such as Access-Control-Allow-Methods, etc.
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		// Allow preflight requests (OPTIONS method) by setting appropriate headers for preflight responses
-		if r.Method == http.MethodOptions {
+		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
 		// Call the next handler in the chain
 		next.ServeHTTP(w, r)
+	})
+}
+
+// LoggingMiddleware logs details of each API call
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+
+		// Proceed with the next handler
+		next.ServeHTTP(w, r)
+
+		// Log details of the API call
+		log.Printf(
+			"[%s] %s %s %s %s",
+			r.Method,
+			r.RequestURI,
+			r.RemoteAddr,
+			r.UserAgent(),
+			time.Since(startTime),
+		)
 	})
 }
