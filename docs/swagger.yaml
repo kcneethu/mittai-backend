@@ -256,8 +256,6 @@ definitions:
       weight:
         type: integer
     type: object
-info:
-  contact: {}
 paths:
   /addresses:
     post:
@@ -929,3 +927,9 @@ paths:
       tags:
       - Addresses
 swagger: "2.0"
+info:
+  title: Your API Title
+  version: 1.0.0
+  contact:
+    name: Your Name
+    email: your.email@example.com
