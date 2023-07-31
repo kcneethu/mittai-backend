@@ -60,31 +60,38 @@ func (us *UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(hashedPassword, "hp ")
-	log.Printf("%+v", user.Password)
 	user.Password = hashedPassword
+
 	// Check if the contact number is unique
 	if us.isContactNumberExists(user.ContactNumber) {
 		http.Error(w, "Contact number already exists", http.StatusConflict)
 		return
 	}
 
-	log.Printf("%+v", user)
-
 	// Save the user to the database
 	err = us.saveUser(&user)
-
-	//print the user
-
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
 
-	// Send the response
+	// Send the response with the generated userID
+	response := map[string]interface{}{
+		"message": "User created successfully",
+		"user_id": user.UserID,
+	}
+
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("User created successfully"))
+	w.Write(responseJSON)
 }
 
 func (us *UserService) saveUser(user *models.User) error {
