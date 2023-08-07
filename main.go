@@ -64,6 +64,7 @@ func main() {
 	purchaseService := services.NewPurchaseService(repo, productService)
 	paymentService := services.NewPaymentService(repo)
 	addressService := services.NewAddressService(repo)
+	wishlistService := services.NewWishlistService(repo)
 	// Create more instances of services as needed
 
 	router := mux.NewRouter()
@@ -81,6 +82,7 @@ func main() {
 	purchaseService.RegisterRoutes(router)
 	paymentService.RegisterRoutes(router)
 	addressService.RegisterRoutes(router)
+	wishlistService.RegisterRoutes(router)
 	http.Handle("/", corsHandler(router))
 	handler := corsMiddleware(router)
 	// Register more services' routes as needed
@@ -104,7 +106,7 @@ func main() {
 	log.Println("Database Path:", dbPath)
 
 	// Start the HTTP server
-	log.Fatal(http.ListenAndServe("0.0.0.0:8080", handler))
+	http.ListenAndServe("0.0.0.0:8080", handler)
 
 }
 

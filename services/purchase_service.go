@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -32,137 +33,95 @@ func (ps *PurchaseService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/purchase/{userID}", ps.GetPurchasesByUserID).Methods(http.MethodGet)
 }
 
-// CreatePurchase creates a new purchase
-// @Summary Create a purchase
-// @Tags Purchase
+// @Summary Create a new purchase
+// @Tags Purchases
 // @Accept json
 // @Produce json
-// @Param request body models.PurchaseRequest true "Purchase request payload"
-// @Success 200 {object} models.PurchaseResponse "Purchase created successfully"
-// @Failure 400 {object} ErrorResponse "Invalid request payload"
-// @Failure 404 {object} ErrorResponse "Product not found"
-// @Failure 409 {object} ErrorResponse "Insufficient stock"
-// @Failure 500 {object} ErrorResponse "Failed to create purchase"
+// @Param purchase body models.PurchaseRequest true "Purchase payload"
+// @Success 200 {string} string "Purchase created successfully"
+// @Failure 400 "Bad request"
+// @Failure 500 "Failed to create purchase"
 // @Router /purchase [post]
 func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request) {
-	var request models.PurchaseRequest
-	err := json.NewDecoder(r.Body).Decode(&request)
+	// Parse and decode the request body into the struct
+	var purchase models.CreatePurchase
+	err := json.NewDecoder(r.Body).Decode(&purchase)
+	if err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	// Store the purchase in the database (this is a simplified example and may require more detailed DB operations)
+	err = ps.storePurchaseInDB(purchase)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
 		return
 	}
 
-	if request.UserID <= 0 || request.AddressID <= 0 || request.PaymentID <= 0 {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
+	// Send the response
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Purchase created successfully"))
+}
 
+func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) error {
+	// Begin a transaction
 	tx, err := ps.DB.Begin()
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	// Calculate total price
-	totalPrice := float64(request.Quantity) * ps.ProductService.GetProductPriceByID(request.ProductWeightID)
-
-	// Insert the purchase into the database
-	result, err := tx.Exec("INSERT INTO purchases (user_id, total_price, address_id, payment_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-		request.UserID, totalPrice, request.AddressID, request.PaymentID, time.Now(), time.Now())
+	// Insert into purchase table
+	query := `INSERT INTO purchases (address_id, payment_id, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
+	result, err := tx.Exec(query, purchase.AddressID, purchase.PaymentID, purchase.UserID, time.Now(), time.Now())
 	if err != nil {
-		log.Println(err)
 		tx.Rollback()
-		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	// Get the ID of the created purchase
+	// Get the last inserted ID of the purchase
 	purchaseID, err := result.LastInsertId()
 	if err != nil {
-		log.Println(err)
 		tx.Rollback()
-		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	// Check if the product exists
-	product, err := ps.ProductService.GetProductByID(strconv.Itoa(request.ProductID))
-	if err != nil {
-		log.Println(err)
-		tx.Rollback()
-		http.Error(w, "Product not found", http.StatusNotFound)
-		return
-	}
+	// Insert purchase items
+	for _, item := range purchase.PurchaseItems {
+		product, err := ps.ProductService.GetProductByID(strconv.Itoa(item.ProductID))
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
 
-	// Find the specific weight variant of the product
-	var weight *models.ProductWeight
-	for _, w := range product.Weights {
-		if w.ID == request.ProductWeightID {
-			weight = w
-			break
+		var weight *models.ProductWeight
+		for _, w := range product.Weights {
+			if w.ID == item.ProductWeightID {
+				weight = w
+				break
+			}
+		}
+
+		if weight == nil {
+			tx.Rollback()
+			return fmt.Errorf("Weight not found for Product ID: %d, Weight ID: %d", item.ProductID, item.ProductWeightID)
+		}
+
+		itemTotalPrice := weight.Price * float64(item.Quantity)
+		query := `INSERT INTO purchase_items (purchase_id, product_id, product_name, product_weight_id, product_price, quantity, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)`
+		_, err = tx.Exec(query, purchaseID, item.ProductID, product.Name, item.ProductWeightID, weight.Price, item.Quantity, itemTotalPrice)
+		if err != nil {
+			tx.Rollback()
+			return err
 		}
 	}
 
-	if weight == nil {
-		tx.Rollback()
-		http.Error(w, "Invalid product weight ID", http.StatusBadRequest)
-		return
-	}
-
-	// Check if there is enough stock
-	if request.Quantity > weight.StockAvailability {
-		tx.Rollback()
-		http.Error(w, "Insufficient stock", http.StatusConflict)
-		return
-	}
-
-	// Reduce the stock quantity
-	updatedStock := weight.StockAvailability - request.Quantity
-	_, err = tx.Exec("UPDATE product_weights SET stock = ? WHERE id = ?", updatedStock, request.ProductWeightID)
-	if err != nil {
-		log.Println(err)
-		tx.Rollback()
-		http.Error(w, "Failed to update stock", http.StatusInternalServerError)
-		return
-	}
-
-	// Retrieve the product name from the database
-	productName, err := ps.ProductService.GetProductNameByID(request.ProductID)
-	if err != nil {
-		log.Println(err)
-		tx.Rollback()
-		http.Error(w, "Failed to retrieve product name", http.StatusInternalServerError)
-		return
-	}
-
-	// Insert purchase item into the database
-	_, err = tx.Exec("INSERT INTO purchase_items (purchase_id, product_id, product_name, product_price, quantity, total_price, product_weight_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		purchaseID, request.ProductID, productName, weight.Price, request.Quantity, totalPrice, request.ProductWeightID)
-	if err != nil {
-		log.Println(err)
-		tx.Rollback()
-		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
-		return
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models.PurchaseResponse{
-		PurchaseID: int(purchaseID),
-	})
+	return tx.Commit()
 }
 
 // GetPurchasesByUserID retrieves purchases made by a specific user
 // @Summary Get purchases by user ID
-// @Tags Purchase
+// @Tags Purchases
 // @Param userID path int true "User ID"
 // @Produce json
 // @Success 200 {array} models.Purchase "Purchases retrieved successfully"

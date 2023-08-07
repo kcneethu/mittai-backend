@@ -14,6 +14,13 @@ type Purchase struct {
 	Items      []*PurchaseItem `json:"items"`
 }
 
+type CreatePurchase struct {
+	AddressID     int            `json:"address_id"`
+	PaymentID     int            `json:"payment_id"`
+	PurchaseItems []PurchaseItem `json:"purchase_items"`
+	UserID        int            `json:"user_id"`
+}
+
 // PurchaseItem represents a purchased item
 type PurchaseItem struct {
 	ProductID       int     `json:"product_id"`
@@ -26,9 +33,13 @@ type PurchaseItem struct {
 
 // PurchaseRequest represents the request payload for creating a purchase
 type PurchaseRequest struct {
-	UserID          int `json:"user_id"`
-	AddressID       int `json:"address_id"`
-	PaymentID       int `json:"payment_id"`
+	UserID              int                   `json:"user_id"`
+	AddressID           int                   `json:"address_id"`
+	PaymentID           int                   `json:"payment_id"`
+	PurchaseItemRequest []PurchaseItemRequest `json:"purchase_items"`
+}
+
+type PurchaseItemRequest struct {
 	ProductID       int `json:"product_id"`
 	ProductWeightID int `json:"product_weight_id"`
 	Quantity        int `json:"quantity"`

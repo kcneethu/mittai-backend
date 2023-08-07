@@ -105,24 +105,26 @@ definitions:
       total_price:
         type: number
     type: object
-  models.PurchaseRequest:
+  models.PurchaseItemRequest:
     properties:
-      address_id:
-        type: integer
-      payment_id:
-        type: integer
       product_id:
         type: integer
       product_weight_id:
         type: integer
       quantity:
         type: integer
-      user_id:
-        type: integer
     type: object
-  models.PurchaseResponse:
+  models.PurchaseRequest:
     properties:
-      purchase_id:
+      address_id:
+        type: integer
+      payment_id:
+        type: integer
+      purchase_items:
+        items:
+          $ref: '#/definitions/models.PurchaseItemRequest'
+        type: array
+      user_id:
         type: integer
     type: object
   models.User:
@@ -145,6 +147,26 @@ definitions:
         type: integer
       verifiedAccount:
         type: boolean
+    type: object
+  models.Wishlist:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      product_id:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.WishlistRequest:
+    properties:
+      product_id:
+        type: integer
+      user_id:
+        type: integer
     type: object
   services.AddProductRequest:
     properties:
@@ -256,6 +278,8 @@ definitions:
       weight:
         type: integer
     type: object
+info:
+  contact: {}
 paths:
   /addresses:
     post:
@@ -727,9 +751,9 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Purchase request payload
+      - description: Purchase payload
         in: body
-        name: request
+        name: purchase
         required: true
         schema:
           $ref: '#/definitions/models.PurchaseRequest'
@@ -739,26 +763,14 @@ paths:
         "200":
           description: Purchase created successfully
           schema:
-            $ref: '#/definitions/models.PurchaseResponse'
+            type: string
         "400":
-          description: Invalid request payload
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-        "404":
-          description: Product not found
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-        "409":
-          description: Insufficient stock
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
+          description: Bad request
         "500":
           description: Failed to create purchase
-          schema:
-            $ref: '#/definitions/services.ErrorResponse'
-      summary: Create a purchase
+      summary: Create a new purchase
       tags:
-      - Purchase
+      - Purchases
   /purchase/{userID}:
     get:
       parameters:
@@ -786,7 +798,7 @@ paths:
             $ref: '#/definitions/services.ErrorResponse'
       summary: Get purchases by user ID
       tags:
-      - Purchase
+      - Purchases
   /users:
     post:
       consumes:
@@ -926,10 +938,111 @@ paths:
       summary: Fetch all addresses for a given user ID
       tags:
       - Addresses
+  /wishlist:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Wishlist item
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/models.WishlistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item added successfully
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Bad request
+        "500":
+          description: Failed to add item to wishlist
+      summary: Add an item to the wishlist
+      tags:
+      - Wishlist
+  /wishlist/{user_id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Wishlist items retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/models.Wishlist'
+            type: array
+        "400":
+          description: Bad request
+        "500":
+          description: Failed to fetch wishlist items
+      summary: Get all wishlist items for a user
+      tags:
+      - Wishlist
+  /wishlist/{user_id}/{product_id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item removed successfully
+          schema:
+            type: string
+        "400":
+          description: Bad request
+        "500":
+          description: Failed to remove item from wishlist
+      summary: Remove an item from the wishlist
+      tags:
+      - Wishlist
+  /wishlist/check/{user_id}/{product_id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item exists in the wishlist
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Bad request
+        "500":
+          description: Failed to check item in wishlist
+      summary: Check if an item exists in the wishlist
+      tags:
+      - Wishlist
 swagger: "2.0"
-info:
-  title: Your API Title
-  version: 1.0.0
-  contact:
-    name: Your Name
-    email: your.email@example.com

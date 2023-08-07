@@ -54,6 +54,21 @@ func (r *Repository) createProductTable() error {
 	return nil
 }
 
+func (r *Repository) createWishlistTable() error {
+	query := `CREATE TABLE IF NOT EXISTS wishlist (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		product_id INTEGER,
+		created_at DATETIME NOT NULL,
+		updated_at DATETIME NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id),
+		FOREIGN KEY (product_id) REFERENCES products(id)
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
 // createUserTable creates the user table in the database if it doesn't exist or modifies the table structure
 func (r *Repository) createUserTable() error {
 	query := `CREATE TABLE IF NOT EXISTS users (
@@ -121,16 +136,12 @@ func (r *Repository) createPurchasesTable() error {
 	query := `CREATE TABLE IF NOT EXISTS purchases (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER,
-		product_id INTEGER,
-		product_price REAL,
-		quantity INTEGER,
 		total_price REAL,
 		address_id INTEGER,
 		payment_id INTEGER,
 		created_at DATETIME,
 		updated_at DATETIME,
 		FOREIGN KEY (user_id) REFERENCES users (id),
-		FOREIGN KEY (product_id) REFERENCES products (id),
 		FOREIGN KEY (address_id) REFERENCES addresses (id),
 		FOREIGN KEY (payment_id) REFERENCES payment_mode (id)
 	);`
@@ -181,6 +192,9 @@ func (r *Repository) CreateTables() {
 		log.Fatal(err)
 	}
 	if err := r.createPurchasesItemTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createWishlistTable(); err != nil {
 		log.Fatal(err)
 	}
 

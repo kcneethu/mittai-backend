@@ -736,13 +736,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Purchase"
+                    "Purchases"
                 ],
-                "summary": "Create a purchase",
+                "summary": "Create a new purchase",
                 "parameters": [
                     {
-                        "description": "Purchase request payload",
-                        "name": "request",
+                        "description": "Purchase payload",
+                        "name": "purchase",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -754,32 +754,14 @@ const docTemplate = `{
                     "200": {
                         "description": "Purchase created successfully",
                         "schema": {
-                            "$ref": "#/definitions/models.PurchaseResponse"
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Product not found",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Insufficient stock",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
+                        "description": "Bad request"
                     },
                     "500": {
-                        "description": "Failed to create purchase",
-                        "schema": {
-                            "$ref": "#/definitions/services.ErrorResponse"
-                        }
+                        "description": "Failed to create purchase"
                     }
                 }
             }
@@ -790,7 +772,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Purchase"
+                    "Purchases"
                 ],
                 "summary": "Get purchases by user ID",
                 "parameters": [
@@ -1039,6 +1021,170 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/wishlist": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Add an item to the wishlist",
+                "parameters": [
+                    {
+                        "description": "Wishlist item",
+                        "name": "item",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WishlistRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item added successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Failed to add item to wishlist"
+                    }
+                }
+            }
+        },
+        "/wishlist/check/{user_id}/{product_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Check if an item exists in the wishlist",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item exists in the wishlist",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Failed to check item in wishlist"
+                    }
+                }
+            }
+        },
+        "/wishlist/{user_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Get all wishlist items for a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wishlist items retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Wishlist"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Failed to fetch wishlist items"
+                    }
+                }
+            }
+        },
+        "/wishlist/{user_id}/{product_id}": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wishlist"
+                ],
+                "summary": "Remove an item from the wishlist",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item removed successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Failed to remove item from wishlist"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1204,6 +1350,20 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PurchaseItemRequest": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                },
+                "product_weight_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.PurchaseRequest": {
             "type": "object",
             "properties": {
@@ -1213,24 +1373,13 @@ const docTemplate = `{
                 "payment_id": {
                     "type": "integer"
                 },
-                "product_id": {
-                    "type": "integer"
-                },
-                "product_weight_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "integer"
+                "purchase_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PurchaseItemRequest"
+                    }
                 },
                 "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.PurchaseResponse": {
-            "type": "object",
-            "properties": {
-                "purchase_id": {
                     "type": "integer"
                 }
             }
@@ -1264,6 +1413,37 @@ const docTemplate = `{
                 },
                 "verifiedAccount": {
                     "type": "boolean"
+                }
+            }
+        },
+        "models.Wishlist": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.WishlistRequest": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
