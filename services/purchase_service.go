@@ -139,7 +139,7 @@ func (ps *PurchaseService) GetPurchasesByUserID(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	rows, err := ps.DB.Query("SELECT id, total_price, address_id, payment_id, created_at, updated_at FROM purchases WHERE user_id = ?", userID)
+	rows, err := ps.DB.Query("SELECT id, address_id, payment_id, created_at, updated_at FROM purchases WHERE user_id = ?", userID)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to fetch purchases", http.StatusInternalServerError)
@@ -152,7 +152,7 @@ func (ps *PurchaseService) GetPurchasesByUserID(w http.ResponseWriter, r *http.R
 	for rows.Next() {
 		var purchase models.Purchase
 
-		err := rows.Scan(&purchase.ID, &purchase.TotalPrice, &purchase.AddressID, &purchase.PaymentID, &purchase.CreatedAt, &purchase.UpdatedAt)
+		err := rows.Scan(&purchase.ID, &purchase.AddressID, &purchase.PaymentID, &purchase.CreatedAt, &purchase.UpdatedAt)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Failed to fetch purchases", http.StatusInternalServerError)
