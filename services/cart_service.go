@@ -136,7 +136,7 @@ func (cs *CartService) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := cs.DB.Query(`SELECT c.id, c.quantity,
 			p.id, p.name, p.description, p.category, p.ingredients, p.nutritional_info, p.image_urls,
-			w.id, w.weight, w.price, w.stock, w.created_at, w.updated_at
+			w.id, w.weight, w.price, w.stock, w.created_at, w.updated_at, w.measurement
 		FROM cart AS c
 		INNER JOIN product_weights AS w ON c.product_weight_id = w.id
 		INNER JOIN products AS p ON w.product_id = p.id
@@ -168,11 +168,12 @@ func (cs *CartService) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 			weightStock      int
 			weightCreatedAt  time.Time
 			weightUpdatedAt  time.Time
+			measurement      string
 		)
 
 		err := rows.Scan(&cartID, &cartItemQuantity,
 			&productID, &productName, &productDesc, &productCat, &productIng, &productNutr, &productImgURLs,
-			&weightID, &weightVal, &weightPrice, &weightStock, &weightCreatedAt, &weightUpdatedAt)
+			&weightID, &weightVal, &weightPrice, &weightStock, &weightCreatedAt, &weightUpdatedAt, &measurement)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Failed to fetch cart", http.StatusInternalServerError)
@@ -188,6 +189,7 @@ func (cs *CartService) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 			StockAvailability: weightStock,
 			CreatedAt:         weightCreatedAt,
 			UpdatedAt:         weightUpdatedAt,
+			Measurement:       measurement,
 		}
 
 		// Create a new cart item

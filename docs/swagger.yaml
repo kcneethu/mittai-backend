@@ -60,6 +60,8 @@ definitions:
         type: string
       id:
         type: integer
+      measurement:
+        type: string
       price:
         type: number
       productID:
@@ -103,6 +105,8 @@ definitions:
       quantity:
         type: integer
       total_price:
+        type: number
+      weight:
         type: number
     type: object
   models.PurchaseItemRequest:
@@ -194,6 +198,8 @@ definitions:
     type: object
   services.AddProductWeightRequest:
     properties:
+      measurement:
+        type: string
       price:
         type: number
       stock:
@@ -271,6 +277,8 @@ definitions:
     type: object
   services.UpdateProductWeightRequest:
     properties:
+      measurement:
+        type: string
       price:
         type: number
       stock:
@@ -744,6 +752,28 @@ paths:
         "500":
           description: Failed to update weight
       summary: Update an existing weight variant for a product
+      tags:
+      - Product Weights
+  /productweight/weights/{weightID}:
+    get:
+      parameters:
+      - description: Weight ID
+        in: path
+        name: weightID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully fetched weight details
+          schema:
+            $ref: '#/definitions/models.ProductWeight'
+        "400":
+          description: Invalid weight ID
+        "500":
+          description: Failed to fetch weight details
+      summary: Fetch product weight details based on product_weight_id
       tags:
       - Product Weights
   /purchase:

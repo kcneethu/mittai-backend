@@ -634,6 +634,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/productweight/weights/{weightID}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product Weights"
+                ],
+                "summary": "Fetch product weight details based on product_weight_id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Weight ID",
+                        "name": "weightID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully fetched weight details",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProductWeight"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid weight ID"
+                    },
+                    "500": {
+                        "description": "Failed to fetch weight details"
+                    }
+                }
+            }
+        },
         "/productweight/{productID}/weights": {
             "post": {
                 "produces": [
@@ -1281,6 +1315,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "measurement": {
+                    "type": "string"
+                },
                 "price": {
                     "type": "number"
                 },
@@ -1346,6 +1383,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "total_price": {
+                    "type": "number"
+                },
+                "weight": {
                     "type": "number"
                 }
             }
@@ -1487,6 +1527,9 @@ const docTemplate = `{
         "services.AddProductWeightRequest": {
             "type": "object",
             "properties": {
+                "measurement": {
+                    "type": "string"
+                },
                 "price": {
                     "type": "number"
                 },
@@ -1608,6 +1651,9 @@ const docTemplate = `{
         "services.UpdateProductWeightRequest": {
             "type": "object",
             "properties": {
+                "measurement": {
+                    "type": "string"
+                },
                 "price": {
                     "type": "number"
                 },

@@ -144,8 +144,8 @@ func (ps *ProductService) saveProduct(product *models.Product) error {
 	// Insert product weights into 'product_weights' table
 	for _, weight := range product.Weights {
 		weight.ProductID = int(productID)
-		query := `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
-		_, err := tx.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt)
+		query := `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at,measurement ) VALUES (?, ?, ?, ?, ?, ?)`
+		_, err := tx.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt, weight.Measurement)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -272,8 +272,8 @@ func (ps *ProductService) updateProduct(product *models.Product) error {
 			}
 		} else {
 			// Insert a new weight
-			query = `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
-			_, err = tx.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt)
+			query = `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at, measurement) VALUES (?, ?, ?, ?, ?, ?)`
+			_, err = tx.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt, weight.Measurement)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -358,7 +358,7 @@ func (ps *ProductService) getProductWeights(productID int) ([]*models.ProductWei
 	var weights []*models.ProductWeight
 	for rows.Next() {
 		weight := &models.ProductWeight{}
-		err := rows.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt)
+		err := rows.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt, &weight.Measurement)
 		if err != nil {
 			return nil, err
 		}
@@ -484,7 +484,6 @@ func (ps *ProductService) deleteProduct(productID string) error {
 }
 
 // UpdateProductWeightByID updates the price of a product variant based on weight ID, removes weight information, and creates a new weight and price
-
 // @Summary Update product price by weight ID, remove weight, and create new weight and price
 // @Tags Products
 // @Param productID path string true "Product ID"
@@ -500,6 +499,7 @@ func (ps *ProductService) UpdateProductWeightByID(w http.ResponseWriter, r *http
 	vars := mux.Vars(r)
 	productID := vars["productID"]
 	weightID := vars["weightID"]
+	measurement := vars["measurement"]
 
 	// Parse the form data
 	err := r.ParseForm()
@@ -518,7 +518,7 @@ func (ps *ProductService) UpdateProductWeightByID(w http.ResponseWriter, r *http
 	}
 
 	// Update the product weight price in the database
-	err = ps.updateProductWeightByID(productID, weightID, price)
+	err = ps.updateProductWeightByID(productID, weightID, price, measurement)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to update product price", http.StatusInternalServerError)
@@ -531,7 +531,7 @@ func (ps *ProductService) UpdateProductWeightByID(w http.ResponseWriter, r *http
 }
 
 // updateProductWeightByID updates the price of a product variant based on weight ID, removes weight information, and creates a new weight and price
-func (ps *ProductService) updateProductWeightByID(productID string, weightID string, price float64) error {
+func (ps *ProductService) updateProductWeightByID(productID string, weightID string, price float64, measurement string) error {
 	// Get the current weight information for the product
 	weight, err := ps.getProductWeightByID(productID, weightID)
 	if err != nil {
@@ -567,10 +567,11 @@ func (ps *ProductService) updateProductWeightByID(productID string, weightID str
 		StockAvailability: weight.StockAvailability,
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
+		Measurement:       weight.Measurement,
 	}
 
-	query = `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
-	_, err = tx.Exec(query, newWeight.ProductID, newWeight.Weight, newWeight.Price, newWeight.StockAvailability, newWeight.CreatedAt, newWeight.UpdatedAt)
+	query = `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at, measurement) VALUES (?, ?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, newWeight.ProductID, newWeight.Weight, newWeight.Price, newWeight.StockAvailability, newWeight.CreatedAt, newWeight.UpdatedAt, newWeight.Measurement)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -590,7 +591,7 @@ func (ps *ProductService) getProductWeightByID(productID string, weightID string
 	row := ps.DB.QueryRow(query, productID, weightID)
 
 	weight := &models.ProductWeight{}
-	err := row.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt)
+	err := row.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt, &weight.Measurement)
 	if err != nil {
 		return nil, err
 	}

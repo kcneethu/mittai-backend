@@ -25,5 +25,6 @@ type ProductWeight struct {
 	Weight               int
 	Price                float64
 	StockAvailability    int
+	Measurement          string
 	CreatedAt, UpdatedAt time.Time
 }

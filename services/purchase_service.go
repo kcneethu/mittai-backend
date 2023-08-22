@@ -139,7 +139,7 @@ func (ps *PurchaseService) GetPurchasesByUserID(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	rows, err := ps.DB.Query("SELECT id, address_id, payment_id, created_at, updated_at FROM purchases WHERE user_id = ?", userID)
+	rows, err := ps.DB.Query("SELECT id, address_id, payment_id, created_at, updated_at FROM purchases WHERE user_id = ? ORDER BY id DESC", userID)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to fetch purchases", http.StatusInternalServerError)
@@ -177,7 +177,26 @@ func (ps *PurchaseService) GetPurchasesByUserID(w http.ResponseWriter, r *http.R
 
 // getPurchaseItemsByPurchaseID retrieves purchase items for a specific purchase ID
 func (ps *PurchaseService) getPurchaseItemsByPurchaseID(purchaseID int) ([]*models.PurchaseItem, error) {
-	rows, err := ps.DB.Query("SELECT product_id, product_name, product_price, quantity, total_price FROM purchase_items WHERE purchase_id = ?", purchaseID)
+	// Adjusting the SQL query to include a JOIN with product_weights and fetch weight.
+	query := `SELECT 
+                pi.product_id, 
+                pi.product_name, 
+                pi.product_price, 
+                pw.weight, 
+                pi.quantity, 
+                pi.total_price,
+				pi.product_weight_id,
+				pw.measurement
+              FROM 
+                purchase_items AS pi 
+              JOIN 
+                product_weights AS pw ON pi.product_weight_id = pw.id 
+              WHERE 
+                pi.purchase_id = ?
+				ORDER BY 
+    			pi.purchase_id DESC;`
+
+	rows, err := ps.DB.Query(query, purchaseID)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +207,8 @@ func (ps *PurchaseService) getPurchaseItemsByPurchaseID(purchaseID int) ([]*mode
 	for rows.Next() {
 		var item models.PurchaseItem
 
-		err := rows.Scan(&item.ProductID, &item.ProductName, &item.ProductPrice, &item.Quantity, &item.TotalPrice)
+		// Scan now includes weight from product_weights table.
+		err := rows.Scan(&item.ProductID, &item.ProductName, &item.ProductPrice, &item.Weight, &item.Quantity, &item.TotalPrice, &item.ProductWeightID, &item.Measurement)
 		if err != nil {
 			return nil, err
 		}

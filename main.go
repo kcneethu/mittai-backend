@@ -114,9 +114,9 @@ func main() {
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set the Access-Control-Allow-Origin header to allow requests from http://localhost:3000
-		for key, values := range r.Header {
-			log.Printf("%s: %v\n", key, values)
-		}
+		//	for key, values := range r.Header {
+		//		log.Printf("%s: %v\n", key, values)
+		//	}
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		// Optionally, you can set other CORS headers, such as Access-Control-Allow-Methods, etc.

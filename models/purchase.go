@@ -30,6 +30,7 @@ type PurchaseItem struct {
 	Quantity        int     `json:"quantity"`
 	TotalPrice      float64 `json:"total_price"`
 	Weight          float64 `json:"weight"`
+	Measurement     string  `json:"measurement"`
 }
 
 // PurchaseRequest represents the request payload for creating a purchase
