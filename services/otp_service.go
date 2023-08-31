@@ -27,7 +27,7 @@ func (us *UserService) sendOTPEmail(email, otp string, userid int) error {
 	client := &http.Client{}
 
 	// Construct the verification link with user ID and OTP
-	verifyLink := fmt.Sprintf("http://localhost:8080/verify-otp/%d", userid)
+	verifyLink := fmt.Sprintf("http://swagger.mittaitheruvu.com/verify-otp/%d", userid)
 	// Construct the HTML email content
 	htmlContent := fmt.Sprintf(
 		"<!DOCTYPE html><html><head><title>OTP Email</title></head><body>"+
