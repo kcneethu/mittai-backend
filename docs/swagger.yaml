@@ -94,6 +94,8 @@ definitions:
     type: object
   models.PurchaseItem:
     properties:
+      measurement:
+        type: string
       product_id:
         type: integer
       product_name:
@@ -151,6 +153,11 @@ definitions:
         type: integer
       verifiedAccount:
         type: boolean
+    type: object
+  models.VerifyOTPRequest:
+    properties:
+      otp:
+        type: string
     type: object
   models.Wishlist:
     properties:
@@ -968,6 +975,44 @@ paths:
       summary: Fetch all addresses for a given user ID
       tags:
       - Addresses
+  /verify-otp/{id}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: OTP object
+        in: body
+        name: otp
+        required: true
+        schema:
+          $ref: '#/definitions/models.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP verified and account updated successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "401":
+          description: Invalid OTP
+          schema:
+            type: string
+        "500":
+          description: Failed to update user
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Verify OTP and update verified_account
+      tags:
+      - Users
   /wishlist:
     post:
       consumes:

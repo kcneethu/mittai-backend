@@ -144,7 +144,7 @@ func (ps *ProductService) saveProduct(product *models.Product) error {
 	// Insert product weights into 'product_weights' table
 	for _, weight := range product.Weights {
 		weight.ProductID = int(productID)
-		query := `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at,measurement ) VALUES (?, ?, ?, ?, ?, ?)`
+		query := `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at, measurement ) VALUES (?, ?, ?, ?, ?, ?, ?)`
 		_, err := tx.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt, weight.Measurement)
 		if err != nil {
 			tx.Rollback()
@@ -358,7 +358,7 @@ func (ps *ProductService) getProductWeights(productID int) ([]*models.ProductWei
 	var weights []*models.ProductWeight
 	for rows.Next() {
 		weight := &models.ProductWeight{}
-		err := rows.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt, &weight.Measurement)
+		err := rows.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.Measurement, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}

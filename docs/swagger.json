@@ -1044,6 +1044,64 @@
                 }
             }
         },
+        "/verify-otp/{id}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Verify OTP and update verified_account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "OTP object",
+                        "name": "otp",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.VerifyOTPRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP verified and account updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid OTP",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update user",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wishlist": {
             "post": {
                 "consumes": [
@@ -1355,6 +1413,9 @@
         "models.PurchaseItem": {
             "type": "object",
             "properties": {
+                "measurement": {
+                    "type": "string"
+                },
                 "product_id": {
                     "type": "integer"
                 },
@@ -1441,6 +1502,14 @@
                 },
                 "verifiedAccount": {
                     "type": "boolean"
+                }
+            }
+        },
+        "models.VerifyOTPRequest": {
+            "type": "object",
+            "properties": {
+                "otp": {
+                    "type": "string"
                 }
             }
         },

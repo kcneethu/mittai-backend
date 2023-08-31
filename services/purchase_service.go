@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gklps/mittai-backend/db"
@@ -15,15 +16,18 @@ import (
 
 // PurchaseService handles the purchase related operations
 type PurchaseService struct {
-	DB             *db.Repository
-	ProductService *ProductService
+	DB              *db.Repository
+	ProductService  *ProductService
+	RecentPurchases map[string]time.Time
+	Mutex           sync.Mutex
 }
 
 // NewPurchaseService creates a new instance of PurchaseService
 func NewPurchaseService(db *db.Repository, prodService *ProductService) *PurchaseService {
 	return &PurchaseService{
-		DB:             db,
-		ProductService: prodService,
+		DB:              db,
+		ProductService:  prodService,
+		RecentPurchases: make(map[string]time.Time),
 	}
 }
 
@@ -51,13 +55,35 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Store the purchase in the database (this is a simplified example and may require more detailed DB operations)
+	// Convert the purchase request to a string to use as a key for the map
+	purchaseKey, err := json.Marshal(purchase)
+	if err != nil {
+		http.Error(w, "Failed to process request", http.StatusInternalServerError)
+		return
+	}
+
+	ps.Mutex.Lock()
+
+	// Check if the same request has been processed recently
+	if timestamp, exists := ps.RecentPurchases[string(purchaseKey)]; exists {
+		if time.Since(timestamp) <= time.Duration(1.5*float64(time.Second)) {
+			http.Error(w, "Duplicate request", http.StatusTooManyRequests)
+			ps.Mutex.Unlock() // Don't forget to unlock before returning
+			return
+		}
+	}
+
+	// Store the purchase in the database
 	err = ps.storePurchaseInDB(purchase)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
 		return
 	}
+
+	// Update the map with the current request and timestamp
+	ps.RecentPurchases[string(purchaseKey)] = time.Now()
+	ps.Mutex.Unlock()
 
 	// Send the response
 	w.WriteHeader(http.StatusOK)

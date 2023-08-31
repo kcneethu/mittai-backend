@@ -86,6 +86,20 @@ func (r *Repository) createUserTable() error {
 	return err
 }
 
+// CreateOTPTable creates the OTP table
+func (r *Repository) createOTPTable() error {
+	query := `CREATE TABLE IF NOT EXISTS otp (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		otp_value TEXT NOT NULL,
+		generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users (user_id)
+	);`
+
+	_, err := r.DB.Exec(query)
+	return err
+}
+
 // createAddressTable creates the address table in the database if it doesn't exist or modifies the table structure
 func (r *Repository) createAddressTable() error {
 	query := `CREATE TABLE IF NOT EXISTS addresses (
@@ -196,6 +210,9 @@ func (r *Repository) CreateTables() {
 		log.Fatal(err)
 	}
 	if err := r.createWishlistTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createOTPTable(); err != nil {
 		log.Fatal(err)
 	}
 

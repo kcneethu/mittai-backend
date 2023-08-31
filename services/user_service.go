@@ -30,6 +30,7 @@ func (us *UserService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/users/{id}", us.UpdateUser).Methods("PUT")
 	r.HandleFunc("/users/{id}", us.DeleteUser).Methods("DELETE")
 	r.HandleFunc("/login", us.Login).Methods("POST") // Add this line for the login route
+	r.HandleFunc("/verify-otp/{id}", us.VerifyOTP).Methods("POST")
 }
 
 // CreateUser creates a new user
@@ -70,6 +71,23 @@ func (us *UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"message": "User created successfully",
 		"user_id": user.UserID,
+	}
+
+	otp := generateOTP()
+	// Save OTP to the database
+	err = us.saveOTP(user.UserID, otp)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
+
+	// Send OTP email
+	err = us.sendOTPEmail(user.Email, otp, user.UserID)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to send OTP email", http.StatusInternalServerError)
+		return
 	}
 
 	responseJSON, err := json.Marshal(response)

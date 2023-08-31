@@ -192,7 +192,7 @@ func (ps *ProductWeightService) getProductWeight(weightID int) (*models.ProductW
 	row := ps.DB.QueryRow(query, weightID)
 
 	var weight models.ProductWeight
-	err := row.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt)
+	err := row.Scan(&weight.ID, &weight.ProductID, &weight.Weight, &weight.Price, &weight.StockAvailability, &weight.CreatedAt, &weight.UpdatedAt, &weight.Measurement)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +201,8 @@ func (ps *ProductWeightService) getProductWeight(weightID int) (*models.ProductW
 
 // saveProductWeight saves a weight variant for a product to the database
 func (ps *ProductWeightService) saveProductWeight(weight *models.ProductWeight) error {
-	query := `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
-	_, err := ps.DB.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt)
+	query := `INSERT INTO product_weights (product_id, weight, price, stock, created_at, updated_at, measurement) VALUES (?, ?, ?, ?, ?, ?,?)`
+	_, err := ps.DB.Exec(query, weight.ProductID, weight.Weight, weight.Price, weight.StockAvailability, weight.CreatedAt, weight.UpdatedAt, weight.Measurement)
 	if err != nil {
 		return err
 	}
