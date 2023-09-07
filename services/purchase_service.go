@@ -19,15 +19,17 @@ type PurchaseService struct {
 	DB              *db.Repository
 	ProductService  *ProductService
 	RecentPurchases map[string]time.Time
+	CartService     *CartService
 	Mutex           sync.Mutex
 }
 
 // NewPurchaseService creates a new instance of PurchaseService
-func NewPurchaseService(db *db.Repository, prodService *ProductService) *PurchaseService {
+func NewPurchaseService(db *db.Repository, prodService *ProductService, cartService *CartService) *PurchaseService {
 	return &PurchaseService{
 		DB:              db,
 		ProductService:  prodService,
 		RecentPurchases: make(map[string]time.Time),
+		CartService:     cartService,
 	}
 }
 
@@ -141,6 +143,7 @@ func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) err
 			return err
 		}
 	}
+	_, err = tx.Exec("DELETE FROM cart WHERE user_id = ?", purchase.UserID)
 
 	return tx.Commit()
 }
