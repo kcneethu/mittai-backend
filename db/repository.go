@@ -2,200 +2,218 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
-
-	_ "github.com/mattn/go-sqlite3"
+	"log"
 )
 
-var db *sql.DB
+type Repository struct {
+	*sql.DB
+}
 
-// InitDB initializes the database connection
-func InitDB(dbPath string) error {
-	conn, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		return fmt.Errorf("failed to open database connection: %w", err)
+func NewRepository(db *sql.DB) *Repository {
+	return &Repository{
+		DB: db,
 	}
-	db = conn
+}
 
-	// Create tables if they don't exist
-	err = createTables()
+// createProductTable creates the product table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createProductTable() error {
+	query := `CREATE TABLE IF NOT EXISTS products (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		description TEXT NOT NULL,
+		category TEXT NOT NULL,
+		ingredients TEXT NOT NULL,
+		nutritional_info TEXT NOT NULL,
+		image_urls TEXT NOT NULL,
+		created_at DATETIME NOT NULL,
+		updated_at DATETIME NOT NULL
+	);`
+
+	_, err := r.Exec(query)
 	if err != nil {
-		return fmt.Errorf("failed to create tables: %w", err)
+		return err
+	}
+
+	// Create the product_weights table if it doesn't exist
+	query = `CREATE TABLE IF NOT EXISTS product_weights (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		product_id INTEGER NOT NULL,
+		weight FLOAT NOT NULL,
+		price FLOAT NOT NULL,
+		measurement STRING NOT NULL,
+		stock INTEGER NOT NULL, -- Modified field name
+		created_at DATETIME NOT NULL,
+		updated_at DATETIME NOT NULL,
+		FOREIGN KEY (product_id) REFERENCES products (id)
+	);`
+
+	_, err = r.Exec(query)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// createTables creates database tables if they don't exist
-func createTables() error {
-	// Create User table
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS User (
+func (r *Repository) createWishlistTable() error {
+	query := `CREATE TABLE IF NOT EXISTS wishlist (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		product_id INTEGER,
+		created_at DATETIME NOT NULL,
+		updated_at DATETIME NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id),
+		FOREIGN KEY (product_id) REFERENCES products(id)
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// createUserTable creates the user table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createUserTable() error {
+	query := `CREATE TABLE IF NOT EXISTS users (
 		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT,
-		email TEXT,
-		contact_number TEXT,
-		address TEXT
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create User table: %w", err)
-	}
+		first_name TEXT NOT NULL,
+		last_name TEXT NOT NULL,
+		email TEXT NOT NULL,
+		contact_number TEXT NOT NULL UNIQUE,
+		verified_account BOOLEAN NOT NULL DEFAULT 0,
+		hashed_password VARCHAR(100) NOT NULL
+	);`
 
-	// Create Product table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Product (
-		product_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT,
-		description TEXT,
-		category TEXT,
-		price REAL,
-		availability INTEGER,
-		ingredients TEXT,
-		nutritional_information TEXT,
-		image_url TEXT
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Product table: %w", err)
-	}
-
-	// Create Product_Weight table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Product_Weight (
-		product_weight_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		product_id INTEGER,
-		weight TEXT,
-		FOREIGN KEY (product_id) REFERENCES Product (product_id)
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Product_Weight table: %w", err)
-	}
-
-	// Create Order table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Order (
-		order_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER,
-		order_date TEXT,
-		total_amount REAL,
-		status TEXT,
-		payment_method TEXT,
-		delivery_address TEXT,
-		FOREIGN KEY (user_id) REFERENCES User (user_id)
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Order table: %w", err)
-	}
-
-	// Create Order_Items table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Order_Items (
-		order_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		order_id INTEGER,
-		product_weight_id INTEGER,
-		quantity INTEGER,
-		price REAL,
-		customization_options TEXT,
-		FOREIGN KEY (order_id) REFERENCES Order (order_id),
-		FOREIGN KEY (product_weight_id) REFERENCES Product_Weight (product_weight_id)
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Order_Items table: %w", err)
-	}
-
-	// Create Inventory table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Inventory (
-		product_weight_id INTEGER PRIMARY KEY,
-		available_quantity INTEGER,
-		reorder_threshold INTEGER,
-		supplier_id INTEGER,
-		FOREIGN KEY (product_weight_id) REFERENCES Product_Weight (product_weight_id),
-		FOREIGN KEY (supplier_id) REFERENCES Supplier (supplier_id)
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Inventory table: %w", err)
-	}
-
-	// Create Supplier table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Supplier (
-		supplier_id INTEGER PRIMARY KEY,
-		name TEXT,
-		contact_number TEXT,
-		email TEXT
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Supplier table: %w", err)
-	}
-
-	// Create Cart table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Cart (
-		cart_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER,
-		product_weight_id INTEGER,
-		quantity INTEGER,
-		applied_discounts TEXT,
-		FOREIGN KEY (user_id) REFERENCES User (user_id),
-		FOREIGN KEY (product_weight_id) REFERENCES Product_Weight (product_weight_id)
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Cart table: %w", err)
-	}
-
-	// Create Reviews table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Reviews (
-		review_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		product_id INTEGER,
-		user_id INTEGER,
-		rating INTEGER,
-		review_text TEXT,
-		review_date TEXT,
-		FOREIGN KEY (product_id) REFERENCES Product (product_id),
-		FOREIGN KEY (user_id) REFERENCES User (user_id)
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Reviews table: %w", err)
-	}
-
-	// Create Promotions table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Promotions (
-		promotion_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		product_id INTEGER,
-		discount_code TEXT,
-		start_date TEXT,
-		end_date TEXT,
-		discount_percentage REAL,
-		FOREIGN KEY (product_id) REFERENCES Product (product_id)
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Promotions table: %w", err)
-	}
-
-	// Create Analytics table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Analytics (
-		analytics_id INTEGER PRIMARY KEY AUTOINCREMENT,
-		date TEXT,
-		total_sales REAL,
-		customer_count INTEGER,
-		revenue REAL
-	)`)
-	if err != nil {
-		return fmt.Errorf("failed to create Analytics table: %w", err)
-	}
-
-	return nil
+	_, err := r.Exec(query)
+	return err
 }
 
-// FlushAllTables deletes all records from all tables
-func FlushAllTables() error {
-	_, err := db.Exec("DELETE FROM User")
-	if err != nil {
-		return fmt.Errorf("failed to flush User table: %w", err)
-	}
+// CreateOTPTable creates the OTP table
+func (r *Repository) createOTPTable() error {
+	query := `CREATE TABLE IF NOT EXISTS otp (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		otp_value TEXT NOT NULL,
+		generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users (user_id)
+	);`
 
-	_, err = db.Exec("DELETE FROM Product")
-	if err != nil {
-		return fmt.Errorf("failed to flush Product table: %w", err)
-	}
-
-	// Flush records from other tables (Product_Weight, Order, Order_Items, Inventory, Supplier, Cart, Reviews, Promotions, Analytics) similarly
-
-	return nil
+	_, err := r.DB.Exec(query)
+	return err
 }
 
-// Implement other database operations (CRUD) for each table using SQL queries
-// Example functions: CreateUser, GetUserByID, ListProducts, GetProductByID, etc.
-// Each function will interact with the database and return the desired data
+// createAddressTable creates the address table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createAddressTable() error {
+	query := `CREATE TABLE IF NOT EXISTS addresses (
+		address_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		address_line1 TEXT NOT NULL,
+		address_line2 TEXT,
+		city TEXT NOT NULL,
+		state TEXT NOT NULL,
+		zip_code TEXT NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users (user_id)
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// createCartTable creates the cart table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createCartTable() error {
+	query := `CREATE TABLE IF NOT EXISTS cart (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		product_weight_id INTEGER NOT NULL,
+		quantity INTEGER NOT NULL,
+		created_at DATETIME NOT NULL,
+		updated_at DATETIME NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users (id),
+		FOREIGN KEY (product_weight_id) REFERENCES product_weights (id)
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// createPaymentModeTable creates the cart table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createPaymentModeTable() error {
+	query := `CREATE TABLE IF NOT EXISTS payment_mode (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		mode TEXT,
+		is_active BOOLEAN
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// createPurchasesTable creates the cart table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createPurchasesTable() error {
+	query := `CREATE TABLE IF NOT EXISTS purchases (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		total_price REAL,
+		address_id INTEGER,
+		payment_id INTEGER,
+		created_at DATETIME,
+		updated_at DATETIME,
+		FOREIGN KEY (user_id) REFERENCES users (id),
+		FOREIGN KEY (address_id) REFERENCES addresses (id),
+		FOREIGN KEY (payment_id) REFERENCES payment_mode (id)
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// createPurchasesItemTable creates the cart table in the database if it doesn't exist or modifies the table structure
+func (r *Repository) createPurchasesItemTable() error {
+	query := `CREATE TABLE IF NOT EXISTS purchase_items (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		purchase_id INTEGER,
+		product_id INTEGER,
+		product_name TEXT,
+		product_price REAL,
+		quantity INTEGER,
+		total_price REAL,
+		product_weight_id INTEGER,
+		FOREIGN KEY (purchase_id) REFERENCES purchases (id),
+		FOREIGN KEY (product_id) REFERENCES products (id),
+		FOREIGN KEY (product_weight_id) REFERENCES product_weights (id)
+	);
+	`
+
+	_, err := r.Exec(query)
+	return err
+}
+
+// CreateTables creates or updates all necessary tables in the database
+func (r *Repository) CreateTables() {
+	if err := r.createProductTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createUserTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createAddressTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createCartTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createPaymentModeTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createPurchasesTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createPurchasesItemTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createWishlistTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createOTPTable(); err != nil {
+		log.Fatal(err)
+	}
+
+}

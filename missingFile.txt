@@ -1,0 +1,255 @@
+// createTables creates database tables if they don't exist
+func createTables() error {
+	// Create User table
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS User (
+		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		first_name TEXT,
+		last_name TEXT,
+		email TEXT,
+		password TEXT,
+		contact_number TEXT UNIQUE,
+		address TEXT,
+		verified_account INTEGER
+	)`)
+	if err != nil {
+		return errors.Wrap(err, "failed to create User table 
+- Missing structures:
+  - Order: models.Order
+  - OrderItem: models.OrderItem
+  - Inventory: models.Inventory
+  - Supplier: models.Supplier
+  - Cart: models.Cart
+  - Review: models.Review
+  - Promotion: models.Promotion
+  - Analytics: models.Analytics
+
+- Missing functions:
+  - GetOrderByID(orderID int) (models.Order, error)
+  - UpdateOrderStatus(orderID int, status string) error
+  - UpdateOrderPaymentMethod(orderID int, paymentMethod string) error
+  - ListInventories() ([]models.Inventory, error)
+  - GetInventoryByProductWeightID(productWeightID int) (models.Inventory, error)
+  - GetSupplierByID(supplierID int) (models.Supplier, error)
+  - ListCarts() ([]models.Cart, error)
+  - GetCartByID(cartID int) (models.Cart, error)
+  - ListReviews() ([]models.Review, error)
+  - GetReviewByID(reviewID int) (models.Review, error)
+  - ListPromotions() ([]models.Promotion, error)
+  - GetPromotionByID(promotionID int) (models.Promotion, error)
+  - ListAnalytics() ([]models.Analytics, error)
+  - GetAnalyticsByID(analyticsID int) (models.Analytics, error)
+  - UpdateUserAddress(userID int, address models.Address) error
+  - AddUserAddress(userID int, address models.Address) error
+  - ListUserAddresses(userID int) ([]models.Address, error)
+  - UpdateOrderTotalAmount(orderID int, totalAmount float64) error
+  - ListOrdersByUserID(userID int) ([]models.Order, error)
+  - ListReviewsByUserID(userID int) ([]models.Review, error)
+  - ListOrdersByStatus(status string) ([]models.Order, error)
+  - ListOrdersByPaymentMethod(paymentMethod string) ([]models.Order, error)
+  - ListOrdersByDateRange(startDate, endDate string) ([]models.Order, error)
+  - ListProductsByCategory(category string) ([]models.Product, error)
+  - ListProductsByAvailability(availability int) ([]models.Product, error)
+  - GetCartByUserIDProductWeightID(userID, productWeightID int) (models.Cart, error)
+  - DeleteOrderItem(orderItemID int) error
+  - DeleteCartItem(cartItemID int) error
+  - DeleteReview(reviewID int) error
+  - DeletePromotion(promotionID int) error
+  - DeleteAnalytics(analyticsID int) error
+  - ListOrdersByUserIDAndStatus(userID int, status string) ([]models.Order, error)
+  - ListOrdersByUserIDAndPaymentMethod(userID int, paymentMethod string) ([]models.Order, error)
+  - ListOrdersByStatusAndPaymentMethod(status, paymentMethod string) ([]models.Order, error)
+  - ListOrdersByUserIDAndDateRange(userID int, startDate, endDate string) ([]models.Order, error)
+  - ListOrdersByStatusAndDateRange(status, startDate, endDate string) ([]models.Order, error)
+  - ListOrdersByPaymentMethodAndDateRange(paymentMethod, startDate, endDate string) ([]models.Order, error)
+  - ListOrdersByUserIDStatusAndDateRange(userID int, status, startDate, endDate string) ([]models.Order, error)
+  - ListOrdersByUserIDPaymentMethodAndDateRange(userID int, paymentMethod, startDate, endDate string) ([]models.Order, error)
+  - ListOrdersByStatusPaymentMethodAndDateRange(status, paymentMethod, startDate, endDate string) ([]models.Order, error)
+  - ListOrdersByUserIDStatusPaymentMethodAndDateRange(userID int, status, paymentMethod, startDate, endDate string) ([]models.Order, error)
+  - ListProductsByName(name string) ([]models.Product, error)
+  - ListProductsByDescription(description string) ([]models.Product, error)
+  - ListProductsByIngredient(ingredient string) ([]models.Product, error)
+  - ListProductsByNutritionalInfo(nutritionalInfo string) ([]models.Product, error)
+  - ListProductsByPriceRange(minPrice, maxPrice float64) ([]models.Product, error)
+  - ListProductsByCategoryAndAvailability(category string, availability int) ([]models.Product, error)
+  - ListProductsByCategoryAndPriceRange(category string, minPrice, maxPrice float64) ([]models.Product, error)
+  - ListProductsByAvailabilityAndPriceRange(availability int, minPrice, maxPrice float64) ([]models.Product, error)
+  - ListProductsByCategoryAvailabilityAndPriceRange(category string, availability int, minPrice, maxPrice float64) ([]models.Product, error)
+  - UpdateOrderStatusPaymentMethodAndDeliveryAddress(orderID int, status, paymentMethod, deliveryAddress string) error
+  - ListOrdersByStatusAndDeliveryAddress(status, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByPaymentMethodAndDeliveryAddress(paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByStatusPaymentMethodAndDeliveryAddress(status, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDStatusAndDeliveryAddress(userID int, status, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDPaymentMethodAndDeliveryAddress(userID int, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByStatusPaymentMethodAndDeliveryAddress(userID int, status, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDStatusPaymentMethodAndDeliveryAddress(userID int, status, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - UpdateOrderStatusPaymentMethodAndTotalAmount(orderID int, status, paymentMethod string, totalAmount float64) error
+  - UpdateOrderStatusPaymentMethodAndDeliveryAddress(orderID int, status, paymentMethod, deliveryAddress string) error
+  - ListOrdersByUserIDStatusPaymentMethodAndDeliveryAddress(userID int, status, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByStatusPaymentMethodAndDeliveryAddress(status, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDPaymentMethodAndDeliveryAddress(userID int, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDStatusAndDeliveryAddress(userID int, status, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDStatusPaymentMethodAndDeliveryAddress(userID int, status, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByStatusPaymentMethodAndDeliveryAddress(status, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDPaymentMethodAndDeliveryAddress(userID int, paymentMethod, deliveryAddress string) ([]models.Order, error)
+  - ListOrdersByUserIDStatusAndDeliveryAddress(userID int, status, deliveryAddress string) ([]models.Order, error)
+  - UpdateOrderStatusPaymentMethodAndTotalAmount(orderID int, status, paymentMethod string, totalAmount float64) error
+  - GetCartByUserIDAndProductWeightID(userID, productWeightID int) (models.Cart, error)
+  - ListCartsByUserID(userID int) ([]models.Cart, error)
+  - UpdateCartQuantity(cartID, quantity int) error
+  - ListCartsByProductWeightID(productWeightID int) ([]models.Cart,
+
+
+--------
+
+
+address.go :
+package models
+
+// Address represents a user address
+type Address struct {
+	AddressID int    `json:"addressID"`
+	UserID    int    `json:"userID"`
+	Address   string `json:"address"`
+	City      string `json:"city"`
+	State     string `json:"state"`
+	ZipCode   string `json:"zipCode"`
+}
+
+analyics.go :
+package models
+
+// Analytics represents the analytics data for a specific date
+type Analytics struct {
+	AnalyticsID   int     `json:"analytics_id"`
+	Date          string  `json:"date"`
+	TotalSales    float64 `json:"total_sales"`
+	CustomerCount int     `json:"customer_count"`
+	Revenue       float64 `json:"revenue"`
+}
+
+carts.go :
+
+package models
+
+// Cart represents a user's cart in the system
+type Cart struct {
+	CartID           int    `json:"cart_id"`
+	UserID           int    `json:"user_id"`
+	ProductWeightID  int    `json:"product_weight_id"`
+	Quantity         int    `json:"quantity"`
+	AppliedDiscounts string `json:"applied_discounts"`
+}
+
+inventory.go :
+
+package models
+
+// Inventory represents the inventory for a specific product weight
+type Inventory struct {
+	ProductWeightID   int `json:"product_weight_id"`
+	AvailableQuantity int `json:"available_quantity"`
+	ReorderThreshold  int `json:"reorder_threshold"`
+	SupplierID        int `json:"supplier_id"`
+}
+
+orders.go :
+package models
+
+// Order represents an order in the system
+type Order struct {
+	OrderID         int         `json:"order_id"`
+	UserID          int         `json:"user_id"`
+	OrderDate       string      `json:"order_date"`
+	TotalAmount     float64     `json:"total_amount"`
+	Status          string      `json:"status"`
+	PaymentMethod   string      `json:"payment_method"`
+	DeliveryAddress string      `json:"delivery_address"`
+	Items           []OrderItem `json:"items"`
+}
+
+// OrderItem represents an item within an order
+type OrderItem struct {
+	OrderItemID          int     `json:"order_item_id"`
+	OrderID              int     `json:"order_id"`
+	ProductWeightID      int     `json:"product_weight_id"`
+	Quantity             int     `json:"quantity"`
+	Price                float64 `json:"price"`
+	CustomizationOptions string  `json:"customization_options"`
+}
+
+product_weight.go :
+package models
+
+// ProductWeight represents the weight options for a product
+type ProductWeight struct {
+	ProductWeightID int    `json:"product_weight_id"`
+	ProductID       int    `json:"product_id"`
+	Weight          string `json:"weight"`
+}
+
+products.go :
+package models
+
+// Product represents a product in the system
+type Product struct {
+	ProductID              int             `json:"product_id"`
+	Name                   string          `json:"name"`
+	Description            string          `json:"description"`
+	Category               string          `json:"category"`
+	Price                  float64         `json:"price"`
+	Availability           int             `json:"availability"`
+	Ingredients            string          `json:"ingredients"`
+	NutritionalInformation string          `json:"nutritional_information"`
+	ImageURL               string          `json:"image_url"`
+	ProductWeights         []ProductWeight `json:"product_weights"`
+}
+
+promotions.go :
+package models
+
+// Promotion represents a product promotion in the system
+type Promotion struct {
+	PromotionID        int     `json:"promotion_id"`
+	ProductID          int     `json:"product_id"`
+	DiscountCode       string  `json:"discount_code"`
+	StartDate          string  `json:"start_date"`
+	EndDate            string  `json:"end_date"`
+	DiscountPercentage float64 `json:"discount_percentage"`
+}
+
+review.go :
+package models
+
+// Review represents a product review in the system
+type Review struct {
+	ReviewID   int    `json:"review_id"`
+	ProductID  int    `json:"product_id"`
+	UserID     int    `json:"user_id"`
+	Rating     int    `json:"rating"`
+	ReviewText string `json:"review_text"`
+	ReviewDate string `json:"review_date"`
+}
+
+supplier.go :
+package models
+
+// Supplier represents a supplier in the system
+type Supplier struct {
+	SupplierID    int    `json:"supplier_id"`
+	Name          string `json:"name"`
+	ContactNumber string `json:"contact_number"`
+	Email         string `json:"email"`
+}
+
+user.go :
+package models
+
+type User struct {
+	UserID          int    `json:"userID"`
+	FirstName       string `json:"firstName"`
+	LastName        string `json:"lastName"`
+	Email           string `json:"email"`
+	ContactNumber   string `json:"contactNumber"`
+	Address         Address `json:"address"`
+	VerifiedAccount bool   `json:"verifiedAccount"`
+}
