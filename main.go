@@ -59,13 +59,13 @@ func main() {
 	// Create instances of the services
 	productService := services.NewProductService(repo)
 	productWeightService := services.NewProductWeightService(repo)
+	orderStatusService := services.NewOrderStatusService(repo)
 	userService := services.NewUserService(repo)
 	cartService := services.NewCartService(repo)
-	purchaseService := services.NewPurchaseService(repo, productService, cartService)
+	purchaseService := services.NewPurchaseService(repo, productService, cartService, orderStatusService)
 	paymentService := services.NewPaymentService(repo)
 	addressService := services.NewAddressService(repo)
 	wishlistService := services.NewWishlistService(repo)
-	orderStatusService := services.NewOrderStatusService(repo)
 	// Create more instances of services as needed
 
 	router := mux.NewRouter()

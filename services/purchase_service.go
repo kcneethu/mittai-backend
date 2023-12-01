@@ -24,13 +24,13 @@ type PurchaseService struct {
 	OrderStatus     *OrderStatus // Add OrderStatusService for handling order status updates
 }
 
-// NewPurchaseService creates a new instance of PurchaseService
-func NewPurchaseService(db *db.Repository, prodService *ProductService, cartService *CartService) *PurchaseService {
+func NewPurchaseService(db *db.Repository, prodService *ProductService, cartService *CartService, orderStatus *OrderStatus) *PurchaseService {
 	return &PurchaseService{
 		DB:              db,
 		ProductService:  prodService,
 		RecentPurchases: make(map[string]time.Time),
 		CartService:     cartService,
+		OrderStatus:     orderStatus, // Add OrderStatus field here
 	}
 }
 
@@ -85,6 +85,7 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	fmt.Println("upadting order status")
 	// Insert 'accepted' status in the orderstatus table using the retrieved purchaseID
 	err = ps.OrderStatus.UpdateOrderStatus(int(purchaseID), "accepted")
 	if err != nil {
@@ -103,6 +104,7 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 }
 
 func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) (int64, error) {
+	fmt.Println("purchase storing to db")
 	// Begin a transaction
 	tx, err := ps.DB.Begin()
 	if err != nil {
@@ -160,6 +162,7 @@ func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) (in
 		return 0, err
 	}
 
+	fmt.Println("latest purchase id", purchaseID)
 	return purchaseID, nil
 }
 
