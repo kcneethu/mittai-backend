@@ -190,7 +190,7 @@ func (r *Repository) createOrderStatusTable() error {
 	query := `CREATE TABLE IF NOT EXISTS orderstatus (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		purchase_id INTEGER NOT NULL,
-		status TEXT NOT NULL DEFAULT 'accepted',
+		status TEXT NOT NULL,
 		FOREIGN KEY (purchase_id) REFERENCES purchases (id)
 	);`
 

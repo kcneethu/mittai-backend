@@ -25,13 +25,6 @@ func (os *OrderStatus) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/orderstatus/{purchaseID}", os.GetOrderStatusHandler).Methods(http.MethodGet)
 }
 
-func (os *OrderStatus) UpdateOrderStatus(purchaseID int, status string) error {
-	query := "INSERT OR REPLACE INTO orderstatus (purchase_id, status) VALUES (?, ?)"
-	//print query with values
-	_, err := os.DB.Exec(query, purchaseID, status)
-	return err
-}
-
 func (os *OrderStatus) GetOrderStatus(purchaseID int) (string, error) {
 	query := "SELECT status FROM orderstatus WHERE purchase_id = ?"
 	row := os.DB.QueryRow(query, purchaseID)
@@ -106,4 +99,41 @@ func (os *OrderStatus) GetOrderStatusHandler(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": status})
+}
+
+func (os *OrderStatus) UpdateOrderStatus(purchaseID int, status string) error {
+	// Check if the record with the given purchase ID exists
+	exists, err := os.OrderStatusExists(purchaseID)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		// The record exists, update it
+		query := "UPDATE orderstatus SET status = ? WHERE purchase_id = ?"
+		_, err := os.DB.Exec(query, status, purchaseID)
+		if err != nil {
+			return err
+		}
+	} else {
+		// The record doesn't exist, insert a new record
+		query := "INSERT INTO orderstatus (purchase_id, status) VALUES (?, ?)"
+		_, err := os.DB.Exec(query, purchaseID, status)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// OrderStatusExists checks if a record with the given purchaseID exists in the orderstatus table.
+func (os *OrderStatus) OrderStatusExists(purchaseID int) (bool, error) {
+	query := "SELECT COUNT(*) FROM orderstatus WHERE purchase_id = ?"
+	var count int
+	err := os.DB.QueryRow(query, purchaseID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
