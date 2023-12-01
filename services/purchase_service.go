@@ -21,6 +21,7 @@ type PurchaseService struct {
 	RecentPurchases map[string]time.Time
 	CartService     *CartService
 	Mutex           sync.Mutex
+	OrderStatus     *OrderStatusService // Add OrderStatusService for handling order status updates
 }
 
 // NewPurchaseService creates a new instance of PurchaseService
@@ -37,6 +38,8 @@ func NewPurchaseService(db *db.Repository, prodService *ProductService, cartServ
 func (ps *PurchaseService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/purchase", ps.CreatePurchase).Methods(http.MethodPost)
 	r.HandleFunc("/purchase/{userID}", ps.GetPurchasesByUserID).Methods(http.MethodGet)
+	r.HandleFunc("/purchase/{purchaseID}/status", ps.UpdateOrderStatus).Methods(http.MethodPut)
+	r.HandleFunc("/purchase/{purchaseID}/status", ps.GetOrderStatus).Methods(http.MethodGet)
 }
 
 // @Summary Create a new purchase
@@ -76,10 +79,18 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 	}
 
 	// Store the purchase in the database
-	err = ps.storePurchaseInDB(purchase)
+	purchaseID, err := ps.storePurchaseInDB(purchase)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
+		return
+	}
+
+	// Insert 'accepted' status in the orderstatus table using the retrieved purchaseID
+	err = ps.OrderStatus.UpdateOrderStatus(int(purchaseID), "accepted")
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to update order status", http.StatusInternalServerError)
 		return
 	}
 
@@ -92,11 +103,11 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 	w.Write([]byte("Purchase created successfully"))
 }
 
-func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) error {
+func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) (int64, error) {
 	// Begin a transaction
 	tx, err := ps.DB.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Insert into purchase table
@@ -104,14 +115,14 @@ func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) err
 	result, err := tx.Exec(query, purchase.AddressID, purchase.PaymentID, purchase.UserID, time.Now(), time.Now())
 	if err != nil {
 		tx.Rollback()
-		return err
+		return 0, err
 	}
 
 	// Get the last inserted ID of the purchase
 	purchaseID, err := result.LastInsertId()
 	if err != nil {
 		tx.Rollback()
-		return err
+		return 0, err
 	}
 
 	// Insert purchase items
@@ -119,7 +130,7 @@ func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) err
 		product, err := ps.ProductService.GetProductByID(strconv.Itoa(item.ProductID))
 		if err != nil {
 			tx.Rollback()
-			return err
+			return 0, err
 		}
 
 		var weight *models.ProductWeight
@@ -132,7 +143,7 @@ func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) err
 
 		if weight == nil {
 			tx.Rollback()
-			return fmt.Errorf("Weight not found for Product ID: %d, Weight ID: %d", item.ProductID, item.ProductWeightID)
+			return 0, fmt.Errorf("Weight not found for Product ID: %d, Weight ID: %d", item.ProductID, item.ProductWeightID)
 		}
 
 		itemTotalPrice := weight.Price * float64(item.Quantity)
@@ -140,12 +151,17 @@ func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) err
 		_, err = tx.Exec(query, purchaseID, item.ProductID, product.Name, item.ProductWeightID, weight.Price, item.Quantity, itemTotalPrice)
 		if err != nil {
 			tx.Rollback()
-			return err
+			return 0, err
 		}
 	}
 	_, err = tx.Exec("DELETE FROM cart WHERE user_id = ?", purchase.UserID)
 
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return purchaseID, nil
 }
 
 // GetPurchasesByUserID retrieves purchases made by a specific user
@@ -246,4 +262,28 @@ func (ps *PurchaseService) getPurchaseItemsByPurchaseID(purchaseID int) ([]*mode
 	}
 
 	return items, nil
+}
+
+func (ps *PurchaseService) UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	purchaseIDStr := vars["purchaseID"]
+	newStatus := r.FormValue("status")
+
+	purchaseID, err := strconv.Atoi(purchaseIDStr)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid purchase ID", http.StatusBadRequest)
+		return
+	}
+
+	// Update the order status in the database
+	err = ps.OrderStatus.UpdateOrderStatus(purchaseID, newStatus)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to update order status", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Order status updated successfully"))
 }

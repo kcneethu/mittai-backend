@@ -186,6 +186,18 @@ func (r *Repository) createPurchasesItemTable() error {
 	return err
 }
 
+func (r *Repository) createOrderStatusTable() error {
+	query := `CREATE TABLE IF NOT EXISTS orderstatus (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		purchase_id INTEGER NOT NULL,
+		status TEXT NOT NULL DEFAULT 'accepted',
+		FOREIGN KEY (purchase_id) REFERENCES purchases (id)
+	);`
+
+	_, err := r.Exec(query)
+	return err
+}
+
 // CreateTables creates or updates all necessary tables in the database
 func (r *Repository) CreateTables() {
 	if err := r.createProductTable(); err != nil {
@@ -213,6 +225,9 @@ func (r *Repository) CreateTables() {
 		log.Fatal(err)
 	}
 	if err := r.createOTPTable(); err != nil {
+		log.Fatal(err)
+	}
+	if err := r.createOrderStatusTable(); err != nil {
 		log.Fatal(err)
 	}
 

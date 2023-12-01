@@ -266,6 +266,11 @@ definitions:
       user_id:
         type: integer
     type: object
+  services.StatusResponse:
+    properties:
+      status:
+        type: string
+    type: object
   services.SuccessResponse:
     properties:
       message:
@@ -808,6 +813,56 @@ paths:
       summary: Create a new purchase
       tags:
       - Purchases
+  /purchase/{purchaseID}/status:
+    get:
+      parameters:
+      - description: Purchase ID
+        in: path
+        name: purchaseID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Order status retrieved successfully
+          schema:
+            $ref: '#/definitions/services.StatusResponse'
+        "400":
+          description: Bad request
+        "500":
+          description: Failed to fetch order status
+      summary: Get the status of an order by purchase ID
+      tags:
+      - OrderStatus
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Purchase ID
+        in: path
+        name: purchaseID
+        required: true
+        type: integer
+      - description: New order status
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Order status updated successfully
+          schema:
+            type: string
+        "400":
+          description: Bad request
+        "500":
+          description: Failed to update order status
+      summary: Update the status of an order by purchase ID
+      tags:
+      - OrderStatus
   /purchase/{userID}:
     get:
       parameters:
