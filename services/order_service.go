@@ -26,7 +26,7 @@ func (os *OrderStatus) RegisterRoutes(r *mux.Router) {
 }
 
 func (os *OrderStatus) UpdateOrderStatus(purchaseID int, status string) error {
-	query := "UPDATE orderstatus SET status = ? WHERE purchase_id = ?"
+	query := "INSERT OR REPLACE INTO orderstatus (purchase_id, status) VALUES (?, ?)"
 	//print query with values
 	log.Println(query, status, purchaseID)
 	_, err := os.DB.Exec(query, status, purchaseID)
@@ -107,10 +107,4 @@ func (os *OrderStatus) GetOrderStatusHandler(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": status})
-}
-
-func (os *OrderStatus) AddOrderStatus(purchaseID int) error {
-	query := "INSERT INTO orderstatus (purchase_id, status) VALUES (?, ?)"
-	_, err := os.DB.Exec(query, purchaseID, "accepted")
-	return err
 }

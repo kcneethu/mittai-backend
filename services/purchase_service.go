@@ -86,7 +86,7 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 	}
 
 	// Insert 'accepted' status in the orderstatus table using the retrieved purchaseID
-	err = ps.OrderStatus.AddOrderStatus(int(purchaseID))
+	err = ps.OrderStatus.UpdateOrderStatus(int(purchaseID), "accepted")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to update order status", http.StatusInternalServerError)
