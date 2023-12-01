@@ -264,10 +264,23 @@ func (ps *PurchaseService) getPurchaseItemsByPurchaseID(purchaseID int) ([]*mode
 	return items, nil
 }
 
+// @Summary Update the status of an order by purchase ID
+// @Tags OrderStatus
+// @Accept json
+// @Produce json
+// @Param purchaseID path int true "Purchase ID"
+// @Param status query string true "New order status"
+// @Success 200 {string} string "Order status updated successfully"
+// @Failure 400 "Bad request"
+// @Failure 500 "Failed to update order status"
+// @Router /purchase/{purchaseID}/status [put]
 func (ps *PurchaseService) UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	purchaseIDStr := vars["purchaseID"]
 	newStatus := r.FormValue("status")
+
+	//print the value of purchaseIDStr and newStatus
+	fmt.Println(purchaseIDStr, newStatus)
 
 	purchaseID, err := strconv.Atoi(purchaseIDStr)
 	if err != nil {

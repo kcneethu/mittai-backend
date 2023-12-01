@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -25,18 +26,11 @@ func NewOrderStatusService(db *db.Repository) *OrderStatusService {
 	}
 }
 
-// @Summary Update the status of an order by purchase ID
-// @Tags OrderStatus
-// @Accept json
-// @Produce json
-// @Param purchaseID path int true "Purchase ID"
-// @Param status query string true "New order status"
-// @Success 200 {string} string "Order status updated successfully"
-// @Failure 400 "Bad request"
-// @Failure 500 "Failed to update order status"
-// @Router /purchase/{purchaseID}/status [put]
 func (os *OrderStatusService) UpdateOrderStatus(purchaseID int, status string) error {
+
 	query := "UPDATE orderstatus SET status = ? WHERE purchase_id = ?"
+	//print the entire query
+	log.Println(query, status, purchaseID)
 	_, err := os.DB.Exec(query, status, purchaseID)
 	return err
 }
@@ -60,6 +54,8 @@ func (ps *PurchaseService) GetOrderStatus(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	fmt.Println("purchaseIDStr", purchaseIDStr)
+	fmt.Println("purchaseID", purchaseID)
 	// Retrieve the order status from the database
 	status, err := ps.getOrderStatusFromDB(purchaseID)
 	if err != nil {
