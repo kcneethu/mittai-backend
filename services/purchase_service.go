@@ -78,6 +78,7 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 
 	// Store the purchase in the database
 	purchaseID, err := ps.storePurchaseInDB(purchase)
+	fmt.Println("latest purchase id", purchaseID)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
@@ -85,7 +86,7 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 	}
 
 	// Insert 'accepted' status in the orderstatus table using the retrieved purchaseID
-	err = ps.OrderStatus.UpdateOrderStatus(int(purchaseID), "accepted")
+	err = ps.OrderStatus.AddOrderStatus(int(purchaseID))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to update order status", http.StatusInternalServerError)
