@@ -78,7 +78,6 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 
 	// Store the purchase in the database
 	purchaseID, err := ps.storePurchaseInDB(purchase)
-	fmt.Println("latest purchase id", purchaseID)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to create purchase", http.StatusInternalServerError)
@@ -104,7 +103,6 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 }
 
 func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) (int64, error) {
-	fmt.Println("purchase storing to db")
 	// Begin a transaction
 	tx, err := ps.DB.Begin()
 	if err != nil {
@@ -162,7 +160,6 @@ func (ps *PurchaseService) storePurchaseInDB(purchase models.CreatePurchase) (in
 		return 0, err
 	}
 
-	fmt.Println("latest purchase id", purchaseID)
 	return purchaseID, nil
 }
 

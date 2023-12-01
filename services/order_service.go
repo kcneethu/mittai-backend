@@ -28,8 +28,7 @@ func (os *OrderStatus) RegisterRoutes(r *mux.Router) {
 func (os *OrderStatus) UpdateOrderStatus(purchaseID int, status string) error {
 	query := "INSERT OR REPLACE INTO orderstatus (purchase_id, status) VALUES (?, ?)"
 	//print query with values
-	log.Println(query, purchaseID, status)
-	_, err := os.DB.Exec(query, status, purchaseID)
+	_, err := os.DB.Exec(query, purchaseID, status)
 	return err
 }
 
