@@ -441,6 +441,82 @@ const docTemplate = `{
                 }
             }
         },
+        "/orderstatus/{purchaseID}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OrderStatus"
+                ],
+                "summary": "Get the status of an order by purchase ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Purchase ID",
+                        "name": "purchaseID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order status retrieved successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Failed to fetch order status"
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OrderStatus"
+                ],
+                "summary": "Update the status of an order by purchase ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Purchase ID",
+                        "name": "purchaseID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "New order status",
+                        "name": "status",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order status updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Failed to update order status"
+                    }
+                }
+            }
+        },
         "/products": {
             "get": {
                 "produces": [
@@ -796,82 +872,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to create purchase"
-                    }
-                }
-            }
-        },
-        "/purchase/{purchaseID}/status": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "OrderStatus"
-                ],
-                "summary": "Get the status of an order by purchase ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Purchase ID",
-                        "name": "purchaseID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Order status retrieved successfully",
-                        "schema": {
-                            "$ref": "#/definitions/services.StatusResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "500": {
-                        "description": "Failed to fetch order status"
-                    }
-                }
-            },
-            "put": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "OrderStatus"
-                ],
-                "summary": "Update the status of an order by purchase ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Purchase ID",
-                        "name": "purchaseID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "New order status",
-                        "name": "status",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Order status updated successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "500": {
-                        "description": "Failed to update order status"
                     }
                 }
             }
@@ -1765,14 +1765,6 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
-                }
-            }
-        },
-        "services.StatusResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string"
                 }
             }
         },

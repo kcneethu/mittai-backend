@@ -21,7 +21,7 @@ type PurchaseService struct {
 	RecentPurchases map[string]time.Time
 	CartService     *CartService
 	Mutex           sync.Mutex
-	OrderStatus     *OrderStatusService // Add OrderStatusService for handling order status updates
+	OrderStatus     *OrderStatus // Add OrderStatusService for handling order status updates
 }
 
 // NewPurchaseService creates a new instance of PurchaseService
@@ -38,8 +38,6 @@ func NewPurchaseService(db *db.Repository, prodService *ProductService, cartServ
 func (ps *PurchaseService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/purchase", ps.CreatePurchase).Methods(http.MethodPost)
 	r.HandleFunc("/purchase/{userID}", ps.GetPurchasesByUserID).Methods(http.MethodGet)
-	r.HandleFunc("/purchase/{purchaseID}/status", ps.UpdateOrderStatus).Methods(http.MethodPut)
-	r.HandleFunc("/purchase/{purchaseID}/status", ps.GetOrderStatus).Methods(http.MethodGet)
 }
 
 // @Summary Create a new purchase
@@ -262,41 +260,4 @@ func (ps *PurchaseService) getPurchaseItemsByPurchaseID(purchaseID int) ([]*mode
 	}
 
 	return items, nil
-}
-
-// @Summary Update the status of an order by purchase ID
-// @Tags OrderStatus
-// @Accept json
-// @Produce json
-// @Param purchaseID path int true "Purchase ID"
-// @Param status query string true "New order status"
-// @Success 200 {string} string "Order status updated successfully"
-// @Failure 400 "Bad request"
-// @Failure 500 "Failed to update order status"
-// @Router /purchase/{purchaseID}/status [put]
-func (ps *PurchaseService) UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	purchaseIDStr := vars["purchaseID"]
-	newStatus := r.FormValue("status")
-
-	//print the value of purchaseIDStr and newStatus
-	fmt.Println(purchaseIDStr, newStatus)
-
-	purchaseID, err := strconv.Atoi(purchaseIDStr)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Invalid purchase ID", http.StatusBadRequest)
-		return
-	}
-
-	// Update the order status in the database
-	err = ps.OrderStatus.UpdateOrderStatus(purchaseID, newStatus)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Failed to update order status", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Order status updated successfully"))
 }

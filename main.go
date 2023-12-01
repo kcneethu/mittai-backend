@@ -65,6 +65,7 @@ func main() {
 	paymentService := services.NewPaymentService(repo)
 	addressService := services.NewAddressService(repo)
 	wishlistService := services.NewWishlistService(repo)
+	orderStatusService := services.NewOrderStatusService(repo)
 	// Create more instances of services as needed
 
 	router := mux.NewRouter()
@@ -83,6 +84,7 @@ func main() {
 	paymentService.RegisterRoutes(router)
 	addressService.RegisterRoutes(router)
 	wishlistService.RegisterRoutes(router)
+	orderStatusService.RegisterRoutes(router)
 	http.Handle("/", corsHandler(router))
 	handler := corsMiddleware(router)
 	// Register more services' routes as needed
