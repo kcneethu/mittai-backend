@@ -995,6 +995,34 @@ paths:
       summary: Update a user
       tags:
       - Users
+  /users/{id}/name:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User name retrieved successfully
+          schema:
+            $ref: '#/definitions/models.User'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to retrieve user name
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Retrieve the first and last name of a user by ID
+      tags:
+      - Users
   /users/{user_id}/addresses:
     get:
       consumes:

@@ -31,6 +31,7 @@ func (us *UserService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/users/{id}", us.DeleteUser).Methods("DELETE")
 	r.HandleFunc("/login", us.Login).Methods("POST") // Add this line for the login route
 	r.HandleFunc("/verify-otp/{id}", us.VerifyOTP).Methods("POST")
+	r.HandleFunc("/users/{id}/name", us.GetUserNameByID).Methods("GET") // Add this new route
 }
 
 // CreateUser creates a new user
@@ -327,4 +328,37 @@ func (us *UserService) hashPassword(password string) (string, error) {
 	// Base64 encode the hashed password before returning it as a string
 	hashedPassword := base64.StdEncoding.EncodeToString(hashedBytes)
 	return hashedPassword, nil
+}
+
+// GetUserNameByID retrieves the first and last name of a user by ID
+// @Summary Retrieve the first and last name of a user by ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} models.User "User name retrieved successfully"
+// @Failure 404 {object} ErrorResponse "User not found"
+// @Failure 500 {object} ErrorResponse "Failed to retrieve user name"
+// @Router /users/{id}/name [get]
+func (us *UserService) GetUserNameByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := vars["id"]
+
+	user, err := us.getUserByID(userID)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to retrieve user name", http.StatusInternalServerError)
+		return
+	}
+
+	// Create a response with the user's first and last name
+	response := map[string]interface{}{
+		"userID":    user.UserID,
+		"firstName": user.FirstName,
+		"lastName":  user.LastName,
+	}
+
+	// Send the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
