@@ -23,3 +23,7 @@ type Address struct {
 	State        string `json:"state"`
 	ZipCode      string `json:"zipCode"`
 }
+
+type EmailCheckResponse struct {
+	Exists bool `json:"exists"`
+}

@@ -23,6 +23,10 @@ func NewAddressService(db *db.Repository) *AddressService {
 	}
 }
 
+type EmailCheckRequest struct {
+	Email string `json:"email"`
+}
+
 // RegisterRoutes registers the address service routes
 func (as *AddressService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/addresses", as.CreateAddress).Methods("POST")
@@ -30,6 +34,7 @@ func (as *AddressService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/addresses/{id}", as.UpdateAddress).Methods("PUT")
 	r.HandleFunc("/addresses/{id}", as.DeleteAddress).Methods("DELETE")
 	r.HandleFunc("/users/{user_id}/addresses", as.GetAddressesByUserID).Methods("GET")
+	r.HandleFunc("/users/check-email", as.CheckEmailExists).Methods("POST")
 
 }
 
@@ -256,4 +261,52 @@ func (as *AddressService) getAddressesByUserID(userID int) ([]*models.Address, e
 	}
 
 	return addresses, nil
+}
+
+// @Summary Check if an email ID exists
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param emailCheckRequest body EmailCheckRequest true "Request body containing email"
+// @Success 200 {object} models.EmailCheckResponse "Email existence response"
+// @Failure 400 {object} ErrorResponse "Invalid request"
+// @Router /users/check-email [post]
+func (as *AddressService) CheckEmailExists(w http.ResponseWriter, r *http.Request) {
+	var req EmailCheckRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Println("Error decoding request body: ", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	email := req.Email
+	log.Println("Received email: ", email)
+
+	if email == "" {
+		http.Error(w, "Email field is required in the request body", http.StatusBadRequest)
+		return
+	}
+
+	exists, err := as.emailExists(email)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to check email", http.StatusInternalServerError)
+		return
+	}
+
+	response := models.EmailCheckResponse{Exists: exists}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (as *AddressService) emailExists(email string) (bool, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM users WHERE email = ?`
+	err := as.DB.QueryRow(query, email).Scan(&count)
+	if err != nil {
+		log.Println("Error querying the database: ", err)
+		return false, err
+	}
+	return count > 0, nil
 }

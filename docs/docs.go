@@ -970,6 +970,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/check-email": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Check if an email ID exists",
+                "parameters": [
+                    {
+                        "description": "Request body containing email",
+                        "name": "emailCheckRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.EmailCheckRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email existence response",
+                        "schema": {
+                            "$ref": "#/definitions/models.EmailCheckResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "get": {
                 "consumes": [
@@ -1442,6 +1481,14 @@ const docTemplate = `{
                 }
             }
         },
+        "models.EmailCheckResponse": {
+            "type": "object",
+            "properties": {
+                "exists": {
+                    "type": "boolean"
+                }
+            }
+        },
         "models.Product": {
             "type": "object",
             "properties": {
@@ -1756,6 +1803,14 @@ const docTemplate = `{
             "properties": {
                 "address_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "services.EmailCheckRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
                 }
             }
         },

@@ -27,6 +27,11 @@ definitions:
       updated_at:
         type: string
     type: object
+  models.EmailCheckResponse:
+    properties:
+      exists:
+        type: boolean
+    type: object
   models.Product:
     properties:
       category:
@@ -232,6 +237,11 @@ definitions:
     properties:
       address_id:
         type: integer
+    type: object
+  services.EmailCheckRequest:
+    properties:
+      email:
+        type: string
     type: object
   services.ErrorResponse:
     properties:
@@ -1053,6 +1063,31 @@ paths:
       summary: Fetch all addresses for a given user ID
       tags:
       - Addresses
+  /users/check-email:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body containing email
+        in: body
+        name: emailCheckRequest
+        required: true
+        schema:
+          $ref: '#/definitions/services.EmailCheckRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email existence response
+          schema:
+            $ref: '#/definitions/models.EmailCheckResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Check if an email ID exists
+      tags:
+      - Users
   /verify-otp/{id}:
     post:
       consumes:
