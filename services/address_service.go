@@ -281,8 +281,6 @@ func (as *AddressService) CheckEmailExists(w http.ResponseWriter, r *http.Reques
 	}
 
 	email := req.Email
-	log.Println("Received email: ", email)
-
 	if email == "" {
 		http.Error(w, "Email field is required in the request body", http.StatusBadRequest)
 		return

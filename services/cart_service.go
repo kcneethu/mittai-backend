@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -58,13 +59,8 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set the default quantity to 1 if not provided
-	if request.Quantity <= 0 {
-		request.Quantity = 1
-	}
-
-	//check if request.userid is valid if not return error
-	if request.UserID <= 0 {
+	// Validate the request
+	if request.UserID <= 0 || request.ProductWeightID <= 0 || request.Quantity <= 0 {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
@@ -76,16 +72,42 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Insert the cart item into the database
-	_, err = tx.Exec("INSERT INTO cart (user_id, product_weight_id, quantity, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-		request.UserID, request.ProductWeightID, request.Quantity, time.Now(), time.Now())
-	if err != nil {
+	// Check if the cart item already exists
+	var currentQuantity int
+	err = tx.QueryRow("SELECT quantity FROM cart WHERE user_id = ? AND product_weight_id = ?",
+		request.UserID, request.ProductWeightID).Scan(&currentQuantity)
+
+	switch {
+	case err == sql.ErrNoRows:
+		// Item does not exist, insert new row
+		_, err = tx.Exec("INSERT INTO cart (user_id, product_weight_id, quantity, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+			request.UserID, request.ProductWeightID, request.Quantity, time.Now(), time.Now())
+		if err != nil {
+			log.Println(err)
+			tx.Rollback()
+			http.Error(w, "Failed to add product to cart", http.StatusInternalServerError)
+			return
+		}
+	case err != nil:
+		// An error occurred
 		log.Println(err)
 		tx.Rollback()
 		http.Error(w, "Failed to add product to cart", http.StatusInternalServerError)
 		return
+	default:
+		// Item exists, update quantity
+		newQuantity := currentQuantity + request.Quantity
+		_, err = tx.Exec("UPDATE cart SET quantity = ?, updated_at = ? WHERE user_id = ? AND product_weight_id = ?",
+			newQuantity, time.Now(), request.UserID, request.ProductWeightID)
+		if err != nil {
+			log.Println(err)
+			tx.Rollback()
+			http.Error(w, "Failed to update cart item", http.StatusInternalServerError)
+			return
+		}
 	}
 
+	// Commit the transaction
 	err = tx.Commit()
 	if err != nil {
 		log.Println(err)
@@ -95,7 +117,7 @@ func (cs *CartService) AddToCart(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ErrorResponse{
-		Message: "Product added to cart successfully",
+		Message: "Cart updated successfully",
 	})
 }
 

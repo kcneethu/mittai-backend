@@ -9,7 +9,6 @@ import (
 
 	"github.com/gklps/mittai-backend/db"
 	"github.com/gklps/mittai-backend/services"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -69,11 +68,11 @@ func main() {
 	// Create more instances of services as needed
 
 	router := mux.NewRouter()
-	corsHandler := handlers.CORS(
-		handlers.AllowedOrigins([]string{"http://localhost:3000"}),
-		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
-		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
-	)
+	// corsHandler := handlers.CORS(
+	// 	handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+	// 	handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+	// 	handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	// )
 
 	// Register the routes for each service
 	productService.RegisterRoutes(router)
@@ -85,8 +84,9 @@ func main() {
 	addressService.RegisterRoutes(router)
 	wishlistService.RegisterRoutes(router)
 	orderStatusService.RegisterRoutes(router)
-	http.Handle("/", corsHandler(router))
-	handler := corsMiddleware(router)
+	http.Handle("/", corsMiddleware(router))
+	// http.Handle("/", corsHandler(router))
+	// handler := corsMiddleware(router)
 	// Register more services' routes as needed
 
 	//router.Use(LoggingMiddleware)
@@ -108,7 +108,7 @@ func main() {
 	log.Println("Database Path:", dbPath)
 
 	// Start the HTTP server
-	http.ListenAndServe("0.0.0.0:8080", handler)
+	http.ListenAndServe("0.0.0.0:8080", nil)
 
 }
 
