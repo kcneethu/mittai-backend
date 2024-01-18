@@ -411,6 +411,28 @@ paths:
       summary: Update an address
       tags:
       - Addresses
+  /all_purchases:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Purchases retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/models.Purchase'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+        "500":
+          description: Failed to fetch purchases
+          schema:
+            $ref: '#/definitions/services.ErrorResponse'
+      summary: Get purchases list
+      tags:
+      - Purchases
   /cart:
     delete:
       consumes:

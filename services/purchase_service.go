@@ -12,6 +12,8 @@ import (
 	"github.com/gklps/mittai-backend/db"
 	"github.com/gklps/mittai-backend/models"
 	"github.com/gorilla/mux"
+	"github.com/twilio/twilio-go"
+	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 // PurchaseService handles the purchase related operations
@@ -22,15 +24,17 @@ type PurchaseService struct {
 	CartService     *CartService
 	Mutex           sync.Mutex
 	OrderStatus     *OrderStatus // Add OrderStatusService for handling order status updates
+	UserService     *UserService
 }
 
-func NewPurchaseService(db *db.Repository, prodService *ProductService, cartService *CartService, orderStatus *OrderStatus) *PurchaseService {
+func NewPurchaseService(db *db.Repository, prodService *ProductService, cartService *CartService, orderStatus *OrderStatus, userService *UserService) *PurchaseService {
 	return &PurchaseService{
 		DB:              db,
 		ProductService:  prodService,
 		RecentPurchases: make(map[string]time.Time),
 		CartService:     cartService,
 		OrderStatus:     orderStatus, // Add OrderStatus field here
+		UserService:     userService, // Initialize UserService here
 	}
 }
 
@@ -38,6 +42,7 @@ func NewPurchaseService(db *db.Repository, prodService *ProductService, cartServ
 func (ps *PurchaseService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/purchase", ps.CreatePurchase).Methods(http.MethodPost)
 	r.HandleFunc("/purchase/{userID}", ps.GetPurchasesByUserID).Methods(http.MethodGet)
+	r.HandleFunc("/all_purchases", ps.GetAllPurchases).Methods(http.MethodGet)
 }
 
 // @Summary Create a new purchase
@@ -60,6 +65,13 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 
 	// Convert the purchase request to a string to use as a key for the map
 	purchaseKey, err := json.Marshal(purchase)
+	if err != nil {
+		http.Error(w, "Failed to process request", http.StatusInternalServerError)
+		return
+	}
+
+	userID := strconv.Itoa(purchase.UserID)         // Convert userID to string
+	user, err := ps.UserService.getUserByID(userID) // Get user details from the database
 	if err != nil {
 		http.Error(w, "Failed to process request", http.StatusInternalServerError)
 		return
@@ -96,6 +108,28 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 	// Update the map with the current request and timestamp
 	ps.RecentPurchases[string(purchaseKey)] = time.Now()
 	ps.Mutex.Unlock()
+	// Construct the WhatsApp message
+	messageBody := "Hi " + user.FirstName + ",\nYour order for "
+	for i, item := range purchase.PurchaseItems {
+		if i > 0 {
+			messageBody += ", "
+		}
+		product, err := ps.ProductService.GetProductByID(strconv.Itoa(item.ProductID))
+		if err != nil {
+			// handle error
+			return
+		}
+		messageBody += product.Name + " x " + strconv.Itoa(item.Quantity)
+	}
+	messageBody += " has been placed."
+
+	// Send the WhatsApp message
+	err = ps.SendWhatsAppMessage(user.ContactNumber, messageBody)
+	if err != nil {
+		// handle error
+		log.Println("Failed to send WhatsApp message: ", err)
+		return
+	}
 
 	// Send the response
 	w.WriteHeader(http.StatusOK)
@@ -261,4 +295,73 @@ func (ps *PurchaseService) getPurchaseItemsByPurchaseID(purchaseID int) ([]*mode
 	}
 
 	return items, nil
+}
+
+func (ps *PurchaseService) SendWhatsAppMessage(to, body string) error {
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: "ACd9fa47d815501108c214891c4e58d33c",
+		Password: "e1c1295f53339e3ce5c7407f96202971",
+	})
+	params := &api.CreateMessageParams{}
+	params.SetTo("whatsapp:" + to)
+	params.SetFrom("whatsapp:+14155238886")
+	params.SetBody(body)
+
+	resp, err := client.Api.CreateMessage(params)
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		if resp.Sid != nil {
+			fmt.Println(*resp.Sid)
+		} else {
+			fmt.Println(resp.Sid)
+		}
+	}
+	return err
+}
+
+// GetAllPurchases retrieves purchases made by a all users
+// @Summary Get purchases list
+// @Tags Purchases
+// @Produce json
+// @Success 200 {array} models.Purchase "Purchases retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Invalid user ID"
+// @Failure 500 {object} ErrorResponse "Failed to fetch purchases"
+// @Router /all_purchases [get]
+func (ps *PurchaseService) GetAllPurchases(w http.ResponseWriter, r *http.Request) {
+
+	rows, err := ps.DB.Query("SELECT id, address_id, payment_id, created_at, updated_at FROM purchases ORDER BY id DESC")
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to fetch purchases", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var purchases []*models.Purchase
+
+	for rows.Next() {
+		var purchase models.Purchase
+
+		err := rows.Scan(&purchase.ID, &purchase.AddressID, &purchase.PaymentID, &purchase.CreatedAt, &purchase.UpdatedAt)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to fetch purchases", http.StatusInternalServerError)
+			return
+		}
+
+		// Retrieve purchase items for each purchase
+		items, err := ps.getPurchaseItemsByPurchaseID(purchase.ID)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to fetch purchases", http.StatusInternalServerError)
+			return
+		}
+
+		purchase.Items = items
+		purchases = append(purchases, &purchase)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(purchases)
 }

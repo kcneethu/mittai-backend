@@ -61,7 +61,7 @@ func main() {
 	orderStatusService := services.NewOrderStatusService(repo)
 	userService := services.NewUserService(repo)
 	cartService := services.NewCartService(repo)
-	purchaseService := services.NewPurchaseService(repo, productService, cartService, orderStatusService)
+	purchaseService := services.NewPurchaseService(repo, productService, cartService, orderStatusService, userService)
 	paymentService := services.NewPaymentService(repo)
 	addressService := services.NewAddressService(repo)
 	wishlistService := services.NewWishlistService(repo)
