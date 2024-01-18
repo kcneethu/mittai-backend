@@ -303,8 +303,9 @@ func (ps *PurchaseService) SendWhatsAppMessage(to, body string) error {
 		Password: "e1c1295f53339e3ce5c7407f96202971",
 	})
 	params := &api.CreateMessageParams{}
-	params.SetTo("whatsapp:" + to)
+	params.SetTo("whatsapp:+917012589845")
 	params.SetFrom("whatsapp:+14155238886")
+	fmt.Println("msg : " + body)
 	params.SetBody(body)
 
 	resp, err := client.Api.CreateMessage(params)
