@@ -42,6 +42,7 @@ func NewPurchaseService(db *db.Repository, prodService *ProductService, cartServ
 func (ps *PurchaseService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/purchase", ps.CreatePurchase).Methods(http.MethodPost)
 	r.HandleFunc("/purchase/{userID}", ps.GetPurchasesByUserID).Methods(http.MethodGet)
+	r.HandleFunc("/purchaseDetails/{purchaseID}", ps.GetPurchasesByPurchaseID).Methods(http.MethodGet)
 	r.HandleFunc("/all_purchases", ps.GetAllPurchases).Methods(http.MethodGet)
 }
 
@@ -71,6 +72,7 @@ func (ps *PurchaseService) CreatePurchase(w http.ResponseWriter, r *http.Request
 	}
 
 	userID := strconv.Itoa(purchase.UserID)         // Convert userID to string
+	fmt.Println("user id : " + userID)              // Print the user ID
 	user, err := ps.UserService.getUserByID(userID) // Get user details from the database
 	if err != nil {
 		http.Error(w, "Failed to process request", http.StatusInternalServerError)
@@ -293,7 +295,6 @@ func (ps *PurchaseService) getPurchaseItemsByPurchaseID(purchaseID int) ([]*mode
 
 		items = append(items, &item)
 	}
-
 	return items, nil
 }
 
@@ -360,6 +361,67 @@ func (ps *PurchaseService) GetAllPurchases(w http.ResponseWriter, r *http.Reques
 		}
 
 		purchase.Items = items
+		purchases = append(purchases, &purchase)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(purchases)
+}
+
+// GetPurchasesByPurchaseID retrieves purchases made by a specific user
+// @Summary Get purchases by user ID
+// @Tags Purchases
+// @Param userID path int true "User ID"
+// @Produce json
+// @Success 200 {array} models.Purchase "Purchases retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Invalid user ID"
+// @Failure 500 {object} ErrorResponse "Failed to fetch purchases"
+// @Router /purchaseDetails/{PurchaseId} [get]
+func (ps *PurchaseService) GetPurchasesByPurchaseID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	purchaseIdstr := vars["purchaseID"]
+	purchaseId, err := strconv.Atoi(purchaseIdstr)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid Purchase ID", http.StatusBadRequest)
+		return
+	}
+
+	rows, err := ps.DB.Query("SELECT id, user_id, address_id, payment_id, created_at, updated_at FROM purchases WHERE id = ?", purchaseId)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to fetch based on purchaseID", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var purchases []*models.Purchase
+
+	for rows.Next() {
+		var purchase models.Purchase
+
+		err := rows.Scan(&purchase.ID, &purchase.UserID, &purchase.AddressID, &purchase.PaymentID, &purchase.CreatedAt, &purchase.UpdatedAt)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to fetch purchases", http.StatusInternalServerError)
+			return
+		}
+
+		// Retrieve purchase items for each purchase
+		items, err := ps.getPurchaseItemsByPurchaseID(purchase.ID)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to fetch purchases from row", http.StatusInternalServerError)
+			return
+		}
+
+		purchase.Items = items
+		// Calculate the sum of total_price in the items key
+		var totalSum float64 = 0
+		for _, item := range items {
+			totalSum += item.TotalPrice
+		}
+		purchase.TotalPrice = totalSum // Assign the calculated sum to the purchase's total_price
 		purchases = append(purchases, &purchase)
 	}
 
