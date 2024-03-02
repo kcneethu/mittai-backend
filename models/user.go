@@ -27,3 +27,27 @@ type Address struct {
 type EmailCheckResponse struct {
 	Exists bool `json:"exists"`
 }
+
+// UserCreationRequest represents the request body for creating a new user based on phone number.
+type UserCreationRequest struct {
+	FirstName     string `json:"firstName"`
+	LastName      string `json:"lastName"`
+	ContactNumber string `json:"contactNumber"`
+}
+
+// UserCreationResponse represents the response body for user creation requests.
+type UserCreationResponse struct {
+	UserID string `json:"userID"`
+}
+
+// MobileCheckResponse represents the JSON response for mobile number existence checks.
+type MobileCheckResponse struct {
+	Exists  bool   `json:"exists"`
+	UserID  string `json:"userID,omitempty"`  // UserID is included only if Exists is true
+	Message string `json:"message,omitempty"` // Optional message, e.g., for errors or status updates
+}
+
+// ContactNumberRequest represents the JSON structure for checking if a mobile number exists.
+type ContactNumberRequest struct {
+	ContactNumber string `json:"contact_number"`
+}

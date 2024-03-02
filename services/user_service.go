@@ -1,8 +1,10 @@
 package services
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -32,6 +34,10 @@ func (us *UserService) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/login", us.Login).Methods("POST") // Add this line for the login route
 	r.HandleFunc("/verify-otp/{id}", us.VerifyOTP).Methods("POST")
 	r.HandleFunc("/users/{id}/name", us.GetUserNameByID).Methods("GET") // Add this new route
+	// The new route for checking if a mobile number exists
+	r.HandleFunc("/users/check-mobile", us.CheckMobileNumberExists).Methods("POST")
+	// The new route for creating a user with minimal details
+	r.HandleFunc("/users/create", us.CreateUserWithDetails).Methods("POST")
 }
 
 // CreateUser creates a new user
@@ -361,4 +367,117 @@ func (us *UserService) GetUserNameByID(w http.ResponseWriter, r *http.Request) {
 	// Send the response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// CheckMobileNumberExists checks if a mobile number exists in the users table.
+// @Summary Check if a mobile number exists
+// @Description Checks if a given mobile number exists in the database and returns a response indicating the existence.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body models.ContactNumberRequest true "Request body containing the contact number to check"
+// @Success 200 {object} models.MobileCheckResponse "Mobile number check response indicating whether the mobile number exists along with the user ID if it does."
+// @Failure 400 {object} ErrorResponse "Invalid request - JSON body is required and must contain a 'contact_number'."
+// @Failure 500 {object} ErrorResponse "Internal server error - Failed to check mobile number due to a server error."
+// @Router /users/check-mobile [post]
+func (us *UserService) CheckMobileNumberExists(w http.ResponseWriter, r *http.Request) {
+	var req models.ContactNumberRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+
+	if req.ContactNumber == "" {
+		http.Error(w, "Invalid request: contact_number is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := us.getUserIDByContactNumber(req.ContactNumber)
+	if err != nil {
+		log.Printf("Error retrieving user by contact number: %v", err)
+		http.Error(w, "Failed to check mobile number", http.StatusInternalServerError)
+		return
+	}
+
+	response := models.MobileCheckResponse{}
+	if userID > 0 {
+		response.Exists = true
+		response.UserID = fmt.Sprintf("%d", userID)
+	} else {
+		response.Exists = false
+		response.Message = "Mobile number not found"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (us *UserService) getUserIDByContactNumber(contactNumber string) (int, error) {
+	var userID int
+	query := `SELECT user_id FROM users WHERE contact_number = ?`
+	err := us.DB.QueryRow(query, contactNumber).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No results found is an expected outcome, not an error. Return 0 for userID and nil for error.
+			return 0, nil
+		}
+		// An actual error occurred, return 0 and the error.
+		return 0, err
+	}
+
+	return userID, nil // User found, return the userID and nil for error.
+}
+
+// CreateUserWithDetails creates a new user with details
+// @Summary Create a new user with first name, last name, and contact number
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param user body models.UserCreationRequest true "User creation request"
+// @Success 200 {object} models.UserCreationResponse "User creation response"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 409 {object} ErrorResponse "Contact number already exists"
+// @Router /users/create [post]
+func (us *UserService) CreateUserWithDetails(w http.ResponseWriter, r *http.Request) {
+	var request models.UserCreationRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if us.isContactNumberExists(request.ContactNumber) {
+		response := models.UserCreationResponse{UserID: "Contact Number Already Exists"}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	userID, err := us.createUserWithDetails(request)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
+
+	response := models.UserCreationResponse{UserID: fmt.Sprintf("%d", userID)}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (us *UserService) createUserWithDetails(request models.UserCreationRequest) (int, error) {
+	// Assume the UserCreationRequest struct and UserCreationResponse struct are defined elsewhere
+	query := `INSERT INTO users (first_name, last_name, contact_number) VALUES (?, ?, ?)`
+	result, err := us.DB.Exec(query, request.FirstName, request.LastName, request.ContactNumber)
+	if err != nil {
+		return 0, err
+	}
+
+	userID, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(userID), nil
 }

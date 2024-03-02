@@ -1074,6 +1074,97 @@
                 }
             }
         },
+        "/users/check-mobile": {
+            "post": {
+                "description": "Checks if a given mobile number exists in the database and returns a response indicating the existence.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Check if a mobile number exists",
+                "parameters": [
+                    {
+                        "description": "Request body containing the contact number to check",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ContactNumberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mobile number check response indicating whether the mobile number exists along with the user ID if it does.",
+                        "schema": {
+                            "$ref": "#/definitions/models.MobileCheckResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request - JSON body is required and must contain a 'contact_number'.",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error - Failed to check mobile number due to a server error.",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/create": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a new user with first name, last name, and contact number",
+                "parameters": [
+                    {
+                        "description": "User creation request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UserCreationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User creation response",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserCreationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Contact number already exists",
+                        "schema": {
+                            "$ref": "#/definitions/services.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "get": {
                 "consumes": [
@@ -1546,11 +1637,35 @@
                 }
             }
         },
+        "models.ContactNumberRequest": {
+            "type": "object",
+            "properties": {
+                "contact_number": {
+                    "type": "string"
+                }
+            }
+        },
         "models.EmailCheckResponse": {
             "type": "object",
             "properties": {
                 "exists": {
                     "type": "boolean"
+                }
+            }
+        },
+        "models.MobileCheckResponse": {
+            "type": "object",
+            "properties": {
+                "exists": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "description": "Optional message, e.g., for errors or status updates",
+                    "type": "string"
+                },
+                "userID": {
+                    "description": "UserID is included only if Exists is true",
+                    "type": "string"
                 }
             }
         },
@@ -1745,6 +1860,28 @@
                 },
                 "verifiedAccount": {
                     "type": "boolean"
+                }
+            }
+        },
+        "models.UserCreationRequest": {
+            "type": "object",
+            "properties": {
+                "contactNumber": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserCreationResponse": {
+            "type": "object",
+            "properties": {
+                "userID": {
+                    "type": "string"
                 }
             }
         },

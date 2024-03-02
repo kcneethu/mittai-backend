@@ -85,30 +85,30 @@ func main() {
 	wishlistService.RegisterRoutes(router)
 	orderStatusService.RegisterRoutes(router)
 	http.Handle("/", corsMiddleware(router))
+	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://0.0.0.0:8080/docs/swagger.json"), // Set the URL to your swagger.json
+	))
 	// http.Handle("/", corsHandler(router))
 	// handler := corsMiddleware(router)
 	// Register more services' routes as needed
 
 	//router.Use(LoggingMiddleware)
 
-	// Set up Swagger
-	swaggerURL := "/docs/swagger.json"
-	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-		httpSwagger.URL(swaggerURL), // The url pointing to API definition
-	))
-	// router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-	// 	httpSwagger.URL(swaggerURL), // The url pointing to API definition
-	// ))
+	// Directly serve swagger.json at a specific route
+	router.HandleFunc("/docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./docs/swagger.json")
+	})
 
+	// Continue to serve other static files in /docs
 	router.PathPrefix("/docs/").Handler(http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 
 	// Log URLs
-	log.Println("Swagger UI (API Documentation): http://localhost:8080/swagger/")
-	log.Println("Swagger JSON Specification: http://localhost:8080/docs" + swaggerURL)
+	log.Println("Swagger UI: http://localhost:8080/swagger/")
+	log.Println("Swagger JSON Specification: http://localhost:8080/docs/swagger.json")
 	log.Println("Database Path:", dbPath)
 
 	// Start the HTTP server
-	http.ListenAndServe("0.0.0.0:8080", nil)
+	log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
 
 }
 

@@ -76,10 +76,10 @@ func (r *Repository) createUserTable() error {
 		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
 		first_name TEXT NOT NULL,
 		last_name TEXT NOT NULL,
-		email TEXT NOT NULL,
+		email TEXT,
 		contact_number TEXT NOT NULL UNIQUE,
-		verified_account BOOLEAN NOT NULL DEFAULT 0,
-		hashed_password VARCHAR(100) NOT NULL
+		verified_account BOOLEAN DEFAULT 0,
+		hashed_password VARCHAR(100)
 	);`
 
 	_, err := r.Exec(query)
