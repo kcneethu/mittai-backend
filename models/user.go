@@ -1,15 +1,17 @@
 package models
 
+import "database/sql"
+
 // User represents a user in the system
 type User struct {
-	UserID          int         `json:"userID"`
-	FirstName       string      `json:"firstName"`
-	LastName        string      `json:"lastName"`
-	Email           string      `json:"email"`
-	ContactNumber   string      `json:"contactNumber"`
-	Address         *[]*Address `json:"address"`
-	VerifiedAccount bool        `json:"verifiedAccount"`
-	Password        string      `json:"password"`
+	UserID          int            `json:"userID"`
+	FirstName       string         `json:"firstName"`
+	LastName        string         `json:"lastName"`
+	Email           sql.NullString `json:"email"`
+	ContactNumber   string         `json:"contactNumber"`
+	Address         *[]*Address    `json:"address"`
+	VerifiedAccount sql.NullBool   `json:"verifiedAccount"`
+	Password        sql.NullString `json:"password"`
 	// isactive  		bool        `json:"isactive"`
 }
 

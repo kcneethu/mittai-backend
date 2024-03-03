@@ -90,11 +90,14 @@ func (us *UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send OTP email
-	err = us.sendOTPEmail(user.Email, otp, user.UserID)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Failed to send OTP email", http.StatusInternalServerError)
-		return
+
+	if user.Email.Valid {
+		err = us.sendOTPEmail(user.Email.String, otp, user.UserID)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Failed to send OTP email", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	responseJSON, err := json.Marshal(response)

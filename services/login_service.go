@@ -60,7 +60,7 @@ func (us *UserService) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("Input Password:", loginReq.Password)
 
 	// Compare the provided plain text password with the stored password
-	if user.Password != loginReq.Password {
+	if user.Password.Valid && user.Password.String != loginReq.Password {
 		log.Println("Invalid password")
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
