@@ -1591,6 +1591,34 @@
                     }
                 }
             }
+        },
+        "/payment/modes": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment_methods"
+                ],
+                "summary": "Fetch all payment methods",
+                "responses": {
+                    "200": {
+                        "description": "List of payment methods",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.PaymentMode"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve payment methods"
+                    }
+                }
+            }
         }
     },
     "definitions": {

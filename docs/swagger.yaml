@@ -1376,4 +1376,20 @@ paths:
       summary: Check if an item exists in the wishlist
       tags:
       - Wishlist
+  /payment/modes:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of payment methods
+          schema:
+            items:
+              $ref: '#/definitions/models.PaymentMode'
+            type: array
+        "500":
+          description: Failed to retrieve payment methods
+      summary: List all payment methods
+      tags:
+      - payment_methods
 swagger: "2.0"
